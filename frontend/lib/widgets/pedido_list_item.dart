@@ -4,6 +4,7 @@ import '../models/producto.dart';
 import '../services/producto_service.dart';
 import '../utils/constants_utils.dart';
 import '../utils/format_utils.dart';
+import '../utils/image_utils.dart';
 
 class PedidoListItem extends StatefulWidget {
   final Pedido pedido;
@@ -40,14 +41,31 @@ class _PedidoListItemState extends State<PedidoListItem> {
     try {
       // Obtener todos los productos
       _todosLosProductos = await ProductoService.obtenerTodosProductos();
+
+      // Verificar si se cargaron correctamente los productos
+      if (_todosLosProductos.isEmpty) {
+        print('Advertencia: No se cargaron productos desde el servicio');
+      }
+
       // Parsear los detalles del pedido
-      productosEnPedido = _parsearDetallesPedido(widget.pedido.detallesPedido);
+      if (widget.pedido.detallesPedido != null &&
+          widget.pedido.detallesPedido.isNotEmpty) {
+        productosEnPedido =
+            _parsearDetallesPedido(widget.pedido.detallesPedido);
+      } else {
+        print(
+            'Advertencia: Detalles de pedido vacíos para pedido ${widget.pedido.nPedido}');
+      }
     } catch (e) {
       print('Error al cargar productos: $e');
+      // Asegurar que no se quede cargando indefinidamente
     } finally {
-      setState(() {
-        _cargandoProductos = false;
-      });
+      if (mounted) {
+        // Verificar que el widget sigue montado
+        setState(() {
+          _cargandoProductos = false;
+        });
+      }
     }
   }
 
@@ -55,52 +73,103 @@ class _PedidoListItemState extends State<PedidoListItem> {
   List<Map<String, dynamic>> _parsearDetallesPedido(String detalles) {
     List<Map<String, dynamic>> resultado = [];
 
-    // Dividir por líneas
-    List<String> lineas = detalles.split('\n');
+    try {
+      if (detalles.isEmpty) {
+        print('Detalles de pedido vacíos');
+        return resultado;
+      }
 
-    for (String linea in lineas) {
-      if (linea.trim().isEmpty) continue;
+      // Dividir por líneas
+      List<String> lineas = detalles.split('\n');
+      bool productosEncontrados = false;
 
-      // Formato esperado: "Nombre Producto: cantidad x precio"
-      int indexDosPuntos = linea.indexOf(':');
-      if (indexDosPuntos == -1) continue;
+      for (String linea in lineas) {
+        linea = linea.trim();
+        if (linea.isEmpty) continue;
 
-      String nombreProducto = linea.substring(0, indexDosPuntos).trim();
-      String resto = linea.substring(indexDosPuntos + 1).trim();
+        // Buscar la sección de productos
+        if (linea == 'Productos:') {
+          productosEncontrados = true;
+          continue;
+        }
 
-      // Extraer cantidad y precio
-      List<String> partes = resto.split('x');
-      if (partes.length < 2) continue;
+        if (!productosEncontrados) continue;
 
-      int cantidad = int.tryParse(partes[0].trim()) ?? 0;
-      String precioStr = partes[1].trim();
+        // Formato esperado: "- Nombre Producto: cantidad x precio = subtotal €"
+        if (linea.startsWith('-')) {
+          linea = linea.substring(1).trim(); // Quitar el guión inicial
 
-      // Buscar el producto en la lista de todos los productos
-      Producto? productoEncontrado = _todosLosProductos.firstWhere(
-        (p) => p.nombre == nombreProducto,
-        orElse: () => Producto(
-          id: '0',
-          nombre: nombreProducto,
-          descripcion: '',
-          imagen: 'assets/images/placeholder.png',
-          stock: 0,
-          precio: 0,
-        ),
-      );
+          int indexDosPuntos = linea.indexOf(':');
+          if (indexDosPuntos == -1) continue;
 
-      // Depuración
-      print(
-          'Producto encontrado: ${productoEncontrado.nombre}, Imagen: ${productoEncontrado.imagen}');
+          String nombreProducto = linea.substring(0, indexDosPuntos).trim();
+          String resto = linea.substring(indexDosPuntos + 1).trim();
 
-      resultado.add({
-        'producto': productoEncontrado,
-        'cantidad': cantidad,
-        'precioUnitario': productoEncontrado.precio,
-        'precioTotal': cantidad * productoEncontrado.precio,
-      });
+          // Extraer cantidad y precio
+          List<String> partes = resto.split('x');
+          if (partes.length < 2) continue;
+
+          int cantidad = int.tryParse(partes[0].trim()) ?? 0;
+          if (cantidad <= 0) continue; // Ignorar cantidades no válidas
+
+          // Extraer precio (antes del "=")
+          String precioStr = partes[1].split('=')[0].trim();
+          double precio = 0.0;
+
+          try {
+            // Extraer solo el número, eliminando el símbolo de moneda
+            precioStr =
+                precioStr.replaceAll(' €', '').replaceAll('€', '').trim();
+            precio = double.parse(precioStr);
+          } catch (e) {
+            print('Error al parsear precio: $precioStr - ${e.toString()}');
+            continue; // Saltar este item si hay error en el precio
+          }
+
+          // Buscar el producto en la lista de todos los productos
+          Producto productoEncontrado;
+          try {
+            productoEncontrado = _todosLosProductos.firstWhere(
+              (p) => p.nombre.toLowerCase() == nombreProducto.toLowerCase(),
+              orElse: () => Producto(
+                id: '0',
+                nombre: nombreProducto,
+                descripcion: 'Producto no encontrado en el catálogo',
+                imagen: 'assets/imagenes/default_product.png',
+                stock: 0,
+                precio: precio,
+              ),
+            );
+          } catch (e) {
+            print('Error al buscar producto por nombre: $e');
+            productoEncontrado = Producto(
+              id: '0',
+              nombre: nombreProducto,
+              descripcion: 'Error al buscar producto',
+              imagen: 'assets/imagenes/default_product.png',
+              stock: 0,
+              precio: precio,
+            );
+          }
+
+          // Depuración
+          print(
+              'Producto encontrado: ${productoEncontrado.nombre}, Imagen: ${productoEncontrado.imagen}, Precio: ${productoEncontrado.precio}');
+
+          resultado.add({
+            'producto': productoEncontrado,
+            'cantidad': cantidad,
+            'precioUnitario': productoEncontrado.precio,
+            'precioTotal': cantidad * productoEncontrado.precio,
+          });
+        }
+      }
+
+      return resultado;
+    } catch (e) {
+      print('Error al parsear detalles del pedido: $e');
+      return resultado;
     }
-
-    return resultado;
   }
 
   @override
@@ -359,57 +428,42 @@ class _PedidoListItemState extends State<PedidoListItem> {
   // Método para construir la imagen del producto
   Widget _buildProductImage(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
-      return const Icon(Icons.image_not_supported, size: 40);
-    }
-
-    // Verificar si la ruta es una URL completa
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return Image.network(
-        imagePath,
-        fit: BoxFit.cover,
+      return Container(
         width: 50,
         height: 50,
-        errorBuilder: (context, error, stackTrace) {
-          print('Error cargando imagen de red: $error');
-          return const Icon(Icons.broken_image, size: 40);
-        },
+        color: Colors.grey.shade300,
+        child:
+            const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
       );
     }
 
-    // Verificar si es un asset completo
-    if (imagePath.startsWith('assets/')) {
-      return Image.asset(
-        imagePath,
-        fit: BoxFit.cover,
-        width: 50,
-        height: 50,
-        errorBuilder: (context, error, stackTrace) {
-          print('Error cargando asset: $error');
-          return const Icon(Icons.broken_image, size: 40);
-        },
-      );
-    }
+    // Asegurar que la ruta de la imagen tenga el formato correcto
+    final String processedImagePath = imagePath.startsWith('assets/')
+        ? imagePath
+        : imagePath.startsWith('http')
+            ? imagePath
+            : 'assets/imagenes/${imagePath.split('/').last}';
 
-    // Si solo tenemos el nombre del archivo (como 'prod1.png'), asumimos que está en assets/imagenes/
-    if (imagePath.endsWith('.png') ||
-        imagePath.endsWith('.jpg') ||
-        imagePath.endsWith('.jpeg')) {
-      String fullPath = 'assets/imagenes/$imagePath';
-      print('Intentando cargar imagen desde: $fullPath');
-      return Image.asset(
-        fullPath,
-        fit: BoxFit.cover,
-        width: 50,
-        height: 50,
-        errorBuilder: (context, error, stackTrace) {
-          print(
-              'Error cargando imagen con ruta construida ($fullPath): $error');
-          return const Icon(Icons.broken_image, size: 40);
-        },
-      );
-    }
-
-    // En cualquier otro caso
-    return const Icon(Icons.image_not_supported, size: 40);
+    return SizedBox(
+      width: 50,
+      height: 50,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image(
+          image: ImageUtils.getImageProvider(processedImagePath),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error cargando imagen: $error - Ruta: $processedImagePath');
+            return Container(
+              width: 50,
+              height: 50,
+              color: Colors.grey.shade300,
+              child:
+                  const Icon(Icons.broken_image, size: 30, color: Colors.grey),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

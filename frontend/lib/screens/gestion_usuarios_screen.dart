@@ -34,12 +34,15 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   }
 
   void _crearUsuario() async {
+    final dialogFormKey = GlobalKey<FormState>();
     TextEditingController usuarioController = TextEditingController();
     TextEditingController contrasenaController = TextEditingController();
     TextEditingController edadController = TextEditingController();
     String selectedTrato = "Sr.";
     String? imagenPath;
     bool esAdmin = false;
+    bool bloqueado = false;
+    String selectedLugarNacimiento = "Madrid";
 
     showDialog(
       context: context,
@@ -48,21 +51,30 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
           return AlertDialog(
             title: const Text("Crear Nuevo Usuario"),
             content: SingleChildScrollView(
-              child: UsuarioForm(
-                isEditing: false,
-                usuarioController: usuarioController,
-                contrasenaController: contrasenaController,
-                edadController: edadController,
-                selectedTrato: selectedTrato,
-                imagenPath: imagenPath,
-                esAdmin: esAdmin,
-                onTratoChanged: (value) =>
-                    setDialogState(() => selectedTrato = value!),
-                onImagenChanged: (value) =>
-                    setDialogState(() => imagenPath = value),
-                onAdminChanged: (value) =>
-                    setDialogState(() => esAdmin = value!),
-                onSave: (usuario) {},
+              child: Form(
+                key: dialogFormKey,
+                child: UsuarioForm(
+                  isEditing: false,
+                  usuarioController: usuarioController,
+                  contrasenaController: contrasenaController,
+                  edadController: edadController,
+                  selectedTrato: selectedTrato,
+                  imagenPath: imagenPath,
+                  esAdmin: esAdmin,
+                  bloqueado: bloqueado,
+                  selectedLugarNacimiento: selectedLugarNacimiento,
+                  onTratoChanged: (value) =>
+                      setDialogState(() => selectedTrato = value!),
+                  onImagenChanged: (value) =>
+                      setDialogState(() => imagenPath = value),
+                  onAdminChanged: (value) =>
+                      setDialogState(() => esAdmin = value!),
+                  onLugarNacimientoChanged: (value) =>
+                      setDialogState(() => selectedLugarNacimiento = value!),
+                  onBloqueadoChanged: (value) =>
+                      setDialogState(() => bloqueado = value!),
+                  onSave: (usuario) {},
+                ),
               ),
             ),
             actions: [
@@ -73,7 +85,13 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  if (_formKey.currentState?.validate() ?? false) {
+                  print('Botón Crear presionado');
+                  // Validar el formulario
+                  final isValid =
+                      dialogFormKey.currentState?.validate() ?? false;
+                  print('Formulario válido: $isValid');
+
+                  if (isValid) {
                     String? errorUsuario = ValidationUtils.validateRequired(
                         usuarioController.text);
                     String? errorContrasena = ValidationUtils.validatePassword(
@@ -82,17 +100,20 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         ValidationUtils.validateAge(edadController.text);
 
                     if (errorUsuario != null) {
-                      DialogUtils.showSnackBar(context, errorUsuario,
+                      print('Error de usuario: $errorUsuario');
+                      DialogUtils.showSnackBar(dialogContext, errorUsuario,
                           color: Constants.errorColor);
                       return;
                     }
                     if (errorContrasena != null) {
-                      DialogUtils.showSnackBar(context, errorContrasena,
+                      print('Error de contraseña: $errorContrasena');
+                      DialogUtils.showSnackBar(dialogContext, errorContrasena,
                           color: Constants.errorColor);
                       return;
                     }
                     if (errorEdad != null) {
-                      DialogUtils.showSnackBar(context, errorEdad,
+                      print('Error de edad: $errorEdad');
+                      DialogUtils.showSnackBar(dialogContext, errorEdad,
                           color: Constants.errorColor);
                       return;
                     }
@@ -108,8 +129,9 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         edad: int.parse(edadController.text),
                         usuario: usuarioController.text,
                         contrasena: contrasenaController.text,
-                        lugarNacimiento: "Madrid",
+                        lugarNacimiento: selectedLugarNacimiento,
                         esAdmin: esAdmin,
+                        bloqueado: bloqueado,
                       );
 
                       Map<String, dynamic> result =
@@ -161,9 +183,22 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
         TextEditingController(text: usuario.contrasena);
     TextEditingController edadController =
         TextEditingController(text: usuario.edad.toString());
-    String selectedTrato = usuario.trato;
+
+    // Almacenar el nombre de usuario original para verificar si cambia
+    final String usuarioOriginal = usuario.usuario;
+
+    // Asignar valores predeterminados si son nulos o vacíos
+    String selectedTrato = usuario.trato.isEmpty ? "Sr." : usuario.trato;
     String? imagenPath = usuario.imagen;
     bool esAdmin = usuario.esAdmin;
+    bool bloqueado = usuario.bloqueado;
+    String lugarNacimiento =
+        usuario.lugarNacimiento.isEmpty ? "Madrid" : usuario.lugarNacimiento;
+
+    print('Editando usuario: ${usuario.usuario}');
+    print('Trato original: "${usuario.trato}", usando: "$selectedTrato"');
+    print(
+        'Lugar nacimiento original: "${usuario.lugarNacimiento}", usando: "$lugarNacimiento"');
 
     showDialog(
       context: context,
@@ -173,8 +208,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
             title: const Text("Editar Usuario"),
             content: SingleChildScrollView(
               child: Form(
-                // Agregar Form widget
-                key: dialogFormKey, // Usar el nuevo formKey
+                key: dialogFormKey,
                 child: UsuarioForm(
                   usuario: usuario,
                   isEditing: true,
@@ -184,6 +218,8 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                   selectedTrato: selectedTrato,
                   imagenPath: imagenPath,
                   esAdmin: esAdmin,
+                  bloqueado: bloqueado,
+                  selectedLugarNacimiento: lugarNacimiento,
                   onTratoChanged: (value) =>
                       setDialogState(() => selectedTrato = value!),
                   onImagenChanged: (value) => setDialogState(() {
@@ -192,6 +228,10 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                   }),
                   onAdminChanged: (value) =>
                       setDialogState(() => esAdmin = value!),
+                  onLugarNacimientoChanged: (value) =>
+                      setDialogState(() => lugarNacimiento = value!),
+                  onBloqueadoChanged: (value) =>
+                      setDialogState(() => bloqueado = value!),
                   onSave: (usuario) {},
                 ),
               ),
@@ -210,31 +250,103 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                     String? errorEdad =
                         ValidationUtils.validateAge(edadController.text);
 
+                    // Verificar si hay errores de validación
                     if (errorContrasena != null) {
-                      DialogUtils.showSnackBar(context, errorContrasena,
+                      DialogUtils.showSnackBar(dialogContext, errorContrasena,
                           color: Constants.errorColor);
                       return;
                     }
                     if (errorEdad != null) {
-                      DialogUtils.showSnackBar(context, errorEdad,
+                      DialogUtils.showSnackBar(dialogContext, errorEdad,
                           color: Constants.errorColor);
                       return;
                     }
 
-                    // Mostrar spinner de carga
+                    // Verificar si el nombre de usuario ha cambiado y si ya existe
+                    if (usuarioController.text != usuarioOriginal) {
+                      print(
+                          'El nombre de usuario ha cambiado de "$usuarioOriginal" a "${usuarioController.text}"');
+
+                      // Mostrar spinner de carga para la verificación
+                      DialogUtils.showLoadingSpinner(dialogContext);
+
+                      try {
+                        // Verificar si el nuevo nombre ya existe
+                        Usuario? usuarioExistente =
+                            await UsuarioService.buscarUsuarioPorNombre(
+                                usuarioController.text);
+
+                        // Cerrar el spinner de verificación
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+
+                        if (usuarioExistente != null) {
+                          DialogUtils.showSnackBar(dialogContext,
+                              "El nombre de usuario ya existe. Por favor, elija otro nombre.",
+                              color: Constants.errorColor);
+                          return;
+                        }
+                      } catch (e) {
+                        // Si es un 404, significa que el usuario no existe (lo que queremos)
+                        if (e.toString().contains('404') ||
+                            e.toString().contains('not_found')) {
+                          print(
+                              'Usuario no encontrado (404), lo cual es bueno para la edición');
+                          // Cerrar el spinner para el caso 404 (usuario no existe)
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop();
+                          }
+                        } else {
+                          // Error de otro tipo
+                          print(
+                              'Error al verificar disponibilidad del nombre: $e');
+                          // Cerrar el spinner en caso de error
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop();
+                          }
+                          DialogUtils.showSnackBar(dialogContext,
+                              "Error al verificar disponibilidad del nombre: $e",
+                              color: Constants.errorColor);
+                          return;
+                        }
+                      }
+                    }
+
+                    // Mostrar spinner de carga para la actualización
                     DialogUtils.showLoadingSpinner(dialogContext);
 
                     try {
-                      usuario.trato = selectedTrato;
-                      usuario.contrasena = contrasenaController.text;
-                      usuario.edad = int.parse(edadController.text);
-                      usuario.imagen = imagenPath ?? '';
-                      usuario.esAdmin = esAdmin;
+                      // Crear un nuevo objeto Usuario con los valores actualizados
+                      Usuario usuarioActualizado = Usuario(
+                        id: usuario.id,
+                        trato: selectedTrato,
+                        imagen:
+                            imagenPath ?? ImageUtils.getDefaultImage(esAdmin),
+                        edad: int.parse(edadController.text),
+                        usuario: usuarioController.text, // Ahora puede cambiar
+                        contrasena: contrasenaController.text,
+                        lugarNacimiento: lugarNacimiento,
+                        bloqueado: bloqueado,
+                        esAdmin: esAdmin,
+                      );
 
-                      await UsuarioService.actualizarUsuario(
-                          usuario,
-                          int.parse(usuario.usuario
-                              .replaceAll(RegExp(r'[^0-9]'), '0')));
+                      // Convertir el ID a entero para la API
+                      int userId = 0;
+                      try {
+                        userId = int.parse(usuario.id ?? "0");
+                      } catch (e) {
+                        print('Error al parsear ID de usuario: $e');
+                        // Intentar extraer números del nombre de usuario como fallback
+                        String numericString =
+                            usuario.usuario.replaceAll(RegExp(r'[^0-9]'), '');
+                        userId = numericString.isEmpty
+                            ? 0
+                            : int.parse(numericString);
+                      }
+
+                      bool success = await UsuarioService.actualizarUsuario(
+                          usuarioActualizado, userId);
 
                       // Cerrar diálogo de edición
                       Navigator.of(dialogContext).pop(); // Cierra el spinner
@@ -244,9 +356,15 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       // Recargar los usuarios
                       _cargarUsuarios();
 
-                      DialogUtils.showSnackBar(
-                          context, "Usuario actualizado correctamente",
-                          color: Constants.successColor);
+                      if (success) {
+                        DialogUtils.showSnackBar(
+                            context, "Usuario actualizado correctamente",
+                            color: Constants.successColor);
+                      } else {
+                        DialogUtils.showSnackBar(
+                            context, "No se pudo actualizar el usuario",
+                            color: Constants.errorColor);
+                      }
                     } catch (e) {
                       // Cerrar diálogo de carga en caso de error
                       if (dialogContext.mounted) {

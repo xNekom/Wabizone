@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/usuario.dart';
-import '../services/usuario_service.dart';
+import '../providers/usuario_provider.dart';
 import '../utils/dialog_utils.dart';
 import '../utils/image_utils.dart';
 import '../utils/constants_utils.dart';
@@ -28,7 +29,12 @@ class _RegistroDialogState extends State<RegistroDialog> {
   bool _isLoading = false;
 
   Future<void> _registrar() async {
-    if (_formKey.currentState!.validate()) {
+    print('Botón de Registro presionado');
+
+    final isValid = _formKey.currentState!.validate();
+    print('Formulario válido: $isValid');
+
+    if (isValid) {
       if (!_aceptaTerminos) {
         DialogUtils.showSnackBar(
             context, "Debe aceptar los términos y condiciones",
@@ -40,20 +46,32 @@ class _RegistroDialogState extends State<RegistroDialog> {
         _isLoading = true;
       });
 
+      print('Datos para registro:');
+      print('Usuario: ${_usuarioController.text}');
+      print('Edad: ${_edadController.text}');
+      print('Trato: $_selectedTrato');
+      print('Lugar: $_selectedCapital');
+
       Usuario nuevoUsuario = Usuario(
         trato: _selectedTrato,
-        imagen: _imagenPath ?? "",
+        imagen: _imagenPath ?? ImageUtils.getDefaultImage(false),
         edad: int.parse(_edadController.text),
         usuario: _usuarioController.text,
         contrasena: _contrasenaController.text,
-        lugarNacimiento: _selectedCapital ?? "",
+        lugarNacimiento: _selectedCapital ?? "Madrid",
         bloqueado: false,
         esAdmin: false,
       );
 
       try {
-        Map<String, dynamic> result =
-            await UsuarioService.agregarUsuario(nuevoUsuario);
+        final usuarioProvider =
+            Provider.of<UsuarioProvider>(context, listen: false);
+        print('Llamando a usuarioProvider.registrar...');
+        final Map<String, dynamic> result =
+            await usuarioProvider.registrar(nuevoUsuario);
+
+        print('Resultado del registro: $result');
+
         if (!mounted) return;
 
         if (result['success']) {
@@ -65,6 +83,7 @@ class _RegistroDialogState extends State<RegistroDialog> {
               color: Constants.errorColor);
         }
       } catch (e) {
+        print('Error en registro: $e');
         if (!mounted) return;
 
         DialogUtils.showSnackBar(

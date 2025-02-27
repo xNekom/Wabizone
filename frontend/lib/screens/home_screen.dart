@@ -8,6 +8,9 @@ import 'pedidos_page.dart';
 import 'yo_page.dart';
 import 'perfil_screen.dart';
 import 'login_screen.dart';
+import 'cart_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/usuario_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final Usuario usuario;
@@ -27,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       ComprasPage(usuario: widget.usuario),
       PedidosPage(usuario: widget.usuario),
+      const CartPage(),
       YoPage(usuario: widget.usuario, onTabChange: _onItemTapped),
     ];
   }
@@ -38,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _cerrarSesion() {
+    Provider.of<UsuarioProvider>(context, listen: false).logout();
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -53,7 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Bienvenido ${widget.usuario.usuario}", style: const TextStyle(color: Colors.white)),
+        title: Text("Bienvenido ${widget.usuario.usuario}",
+            style: const TextStyle(color: Colors.white)),
         backgroundColor: Constants.primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -72,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         backgroundColor: Constants.primaryColor,
@@ -79,8 +87,10 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.white70,
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart), label: "Compras"),
+              icon: Icon(Icons.shopping_bag), label: "Productos"),
           BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: "Pedidos"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart), label: "Carrito"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Yo"),
         ],
       ),

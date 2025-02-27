@@ -1,10 +1,12 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/producto.dart';
+import 'dio_client.dart';
 
 class ProductoService {
-  // URL base para la API
-  static const String baseUrl = 'http://localhost:8081/api/v1/products';
+  // URL base para la API (ahora relativa ya que la base está en DioClient)
+  static const String endpoint = '/products';
+
+  // Cliente DIO
+  static final DioClient _dioClient = DioClient();
 
   // Caché local para productos
   static List<Producto> _productosCache = [];
@@ -45,46 +47,39 @@ class ProductoService {
   // Obtener todos los productos
   static Future<List<Producto>> obtenerTodosProductos() async {
     try {
-      final response = await http.get(
-        Uri.parse(baseUrl),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json; charset=UTF-8',
-        },
-      );
+      // Si ya tenemos productos en caché y no son vacíos, devolverlos
+      if (_productosCache.isNotEmpty) {
+        return _productosCache;
+      }
+
+      // DIO maneja automáticamente la codificación/decodificación UTF-8
+      final response = await _dioClient.get(endpoint);
 
       if (response.statusCode == 200) {
-        // Decodificar con UTF-8 para manejar caracteres especiales
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        List<dynamic> productsData = json.decode(decodedBody);
+        List<dynamic> productsData = response.data;
         _productosCache = productsData
             .map((productData) => _mapearProducto(productData))
             .toList();
+
+        print('Productos cargados exitosamente: ${_productosCache.length}');
         return _productosCache;
       } else {
-        return _productosCache;
+        print('Error al obtener productos: Código ${response.statusCode}');
+        return _productosCache.isNotEmpty ? _productosCache : [];
       }
     } catch (e) {
       print('Error al obtener productos: $e');
-      return _productosCache;
+      return _productosCache.isNotEmpty ? _productosCache : [];
     }
   }
 
   // Obtener producto por ID
   static Future<Producto?> obtenerProductoPorId(String id) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/custom/$id'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Accept': 'application/json; charset=UTF-8',
-        },
-      );
+      final response = await _dioClient.get('$endpoint/custom/$id');
 
       if (response.statusCode == 200) {
-        // Decodificar con UTF-8 para manejar caracteres especiales
-        final String decodedBody = utf8.decode(response.bodyBytes);
-        Map<String, dynamic> productData = json.decode(decodedBody);
+        Map<String, dynamic> productData = response.data;
         return _mapearProducto(productData);
       } else {
         return null;
@@ -98,10 +93,9 @@ class ProductoService {
   // Agregar nuevo producto
   static Future<bool> agregarProducto(Producto producto) async {
     try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(_productoToJson(producto)),
+      final response = await _dioClient.post(
+        endpoint,
+        data: _productoToJson(producto),
       );
 
       return response.statusCode == 201;
@@ -114,10 +108,9 @@ class ProductoService {
   // Actualizar producto existente
   static Future<bool> actualizarProducto(Producto producto, int id) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(_productoToJson(producto)),
+      final response = await _dioClient.put(
+        '$endpoint/$id',
+        data: _productoToJson(producto),
       );
 
       return response.statusCode == 200;
@@ -130,7 +123,7 @@ class ProductoService {
   // Eliminar producto
   static Future<bool> eliminarProducto(String id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/custom/$id'));
+      final response = await _dioClient.delete('$endpoint/custom/$id');
       return response.statusCode == 204;
     } catch (e) {
       print('Error al eliminar producto: $e');

@@ -26,58 +26,61 @@ class PerfilScreen extends StatelessWidget {
         width: double.infinity,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 75,
-                  backgroundImage: ImageUtils.getImageProvider(usuario!.imagen),
-                  backgroundColor: Constants.primaryColor.withOpacity(0.2),
-                  child: usuario!.imagen.isEmpty
-                      ? Icon(
-                          Icons.person,
-                          size: 100,
-                          color: Constants.primaryColor,
-                        )
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        Text('Trato: ${usuario!.trato}',
-                            style: const TextStyle(fontSize: 18)),
-                        const SizedBox(height: 8),
-                        Text('Edad: ${usuario!.edad}',
-                            style: const TextStyle(fontSize: 18)),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Usuario: ${usuario!.usuario}',
-                                style: const TextStyle(fontSize: 18)),
-                            if (usuario!.esAdmin) const SizedBox(width: 4),
-                            if (usuario!.esAdmin) Constants.adminBadge,
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Lugar de Nacimiento: ${usuario!.lugarNacimiento}',
-                            style: const TextStyle(fontSize: 18)),
-                      ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Avatar del usuario
+              usuario!.imagen.isNotEmpty
+                  ? CircleAvatar(
+                      radius: 75,
+                      backgroundImage:
+                          ImageUtils.getImageProvider(usuario!.imagen),
+                      backgroundColor: Constants.primaryColor.withOpacity(0.2),
+                    )
+                  : CircleAvatar(
+                      radius: 75,
+                      backgroundColor: Constants.primaryColor.withOpacity(0.2),
+                      child: Icon(
+                        Icons.person,
+                        size: 80,
+                        color: Constants.primaryColor,
+                      ),
                     ),
+              const SizedBox(height: 16),
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Text('Trato: ${usuario!.trato}',
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 8),
+                      Text('Edad: ${usuario!.edad}',
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Usuario: ${usuario!.usuario}',
+                              style: const TextStyle(fontSize: 18)),
+                          if (usuario!.esAdmin) const SizedBox(width: 4),
+                          if (usuario!.esAdmin) Constants.adminBadge,
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Lugar de Nacimiento: ${usuario!.lugarNacimiento}',
+                          style: const TextStyle(fontSize: 18)),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

@@ -3,6 +3,8 @@ import '../models/usuario.dart';
 import '../utils/button_styles.dart';
 import '../utils/image_utils.dart';
 import '../utils/constants_utils.dart';
+import 'package:provider/provider.dart';
+import '../providers/usuario_provider.dart';
 
 class EditarUsuarioScreen extends StatefulWidget {
   final Usuario usuario;
@@ -16,38 +18,74 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _edadController;
-  late TextEditingController _lugarController;
   late TextEditingController _contrasenaController;
+  late TextEditingController _confirmarContrasenaController;
+  String _lugarSeleccionado = '';
 
   @override
   void initState() {
     super.initState();
     _edadController =
         TextEditingController(text: widget.usuario.edad.toString());
-    _lugarController =
-        TextEditingController(text: widget.usuario.lugarNacimiento);
     _contrasenaController =
         TextEditingController(text: widget.usuario.contrasena);
+    _confirmarContrasenaController =
+        TextEditingController(text: widget.usuario.contrasena);
+    _lugarSeleccionado = widget.usuario.lugarNacimiento;
   }
 
   void _guardarCambios() {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        widget.usuario.edad = int.parse(_edadController.text);
-        widget.usuario.lugarNacimiento = _lugarController.text;
-        widget.usuario.contrasena = _contrasenaController.text;
+      // Crear una copia del usuario para actualizarlo
+      final usuarioActualizado = Usuario(
+        id: widget.usuario.id,
+        trato: widget.usuario.trato,
+        imagen: widget.usuario.imagen,
+        edad: int.parse(_edadController.text),
+        usuario: widget.usuario.usuario,
+        contrasena: _contrasenaController.text,
+        lugarNacimiento: _lugarSeleccionado,
+        bloqueado: widget.usuario.bloqueado,
+        esAdmin: widget.usuario.esAdmin,
+      );
+
+      // Actualizar en el provider
+      final usuarioProvider =
+          Provider.of<UsuarioProvider>(context, listen: false);
+
+      // Obtener el ID como entero
+      int userId = 0;
+      try {
+        userId = int.parse(widget.usuario.id ?? "0");
+      } catch (e) {
+        print('Error al parsear ID de usuario: $e');
+        // Intentar extraer números del nombre de usuario como fallback
+        String numericString =
+            widget.usuario.usuario.replaceAll(RegExp(r'[^0-9]'), '');
+        userId = numericString.isEmpty ? 0 : int.parse(numericString);
+      }
+
+      print('Guardando cambios para usuario con ID: $userId');
+      usuarioProvider
+          .actualizarUsuario(usuarioActualizado, userId)
+          .then((success) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Usuario actualizado")));
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error: ${usuarioProvider.error}")));
+        }
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Usuario actualizado")));
-      Navigator.pop(context);
     }
   }
 
   @override
   void dispose() {
     _edadController.dispose();
-    _lugarController.dispose();
     _contrasenaController.dispose();
+    _confirmarContrasenaController.dispose();
     super.dispose();
   }
 
@@ -55,7 +93,8 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Editar Usuario", style: TextStyle(color: Colors.white)),
+        title:
+            const Text("Editar Usuario", style: TextStyle(color: Colors.white)),
         backgroundColor: Constants.primaryColor,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -76,13 +115,25 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                 },
                 child: Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundImage: ImageUtils.getImageProvider(widget.usuario.imagen),
-                      backgroundColor: Constants.primaryColor.withOpacity(0.3),
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Constants.primaryColor.withOpacity(0.3),
+                        shape: BoxShape.circle,
+                      ),
                       child: widget.usuario.imagen.isEmpty
-                          ? Icon(Icons.person, size: 80, color: Constants.primaryColor)
-                          : null,
+                          ? Icon(Icons.person,
+                              size: 80, color: Constants.primaryColor)
+                          : ClipOval(
+                              child: Image(
+                                image: ImageUtils.getImageProvider(
+                                    widget.usuario.imagen),
+                                width: 120,
+                                height: 120,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                     ),
                     Positioned(
                       bottom: 0,
@@ -90,7 +141,8 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                       child: CircleAvatar(
                         backgroundColor: Constants.primaryColor,
                         radius: 18,
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 18),
                       ),
                     ),
                   ],
@@ -120,8 +172,10 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _lugarController,
+              DropdownButtonFormField<String>(
+                value: _lugarSeleccionado.isEmpty
+                    ? Constants.capitales.first
+                    : (_lugarSeleccionado),
                 decoration: InputDecoration(
                   labelText: "Lugar de Nacimiento",
                   border: const OutlineInputBorder(),
@@ -130,6 +184,19 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                   ),
                   labelStyle: TextStyle(color: Constants.primaryColor),
                 ),
+                items: Constants.capitales.map((String capital) {
+                  return DropdownMenuItem<String>(
+                    value: capital,
+                    child: Text(capital),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _lugarSeleccionado = newValue;
+                    });
+                  }
+                },
                 validator: (value) => (value == null || value.isEmpty)
                     ? "Campo obligatorio"
                     : null,
@@ -151,6 +218,28 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                     : null,
               ),
               const SizedBox(height: 16),
+              TextFormField(
+                controller: _confirmarContrasenaController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: "Confirmar Contraseña",
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Constants.primaryColor),
+                  ),
+                  labelStyle: TextStyle(color: Constants.primaryColor),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Campo obligatorio";
+                  }
+                  if (value != _contrasenaController.text) {
+                    return "Las contraseñas no coinciden";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _guardarCambios,
                 style: estiloBoton(),
