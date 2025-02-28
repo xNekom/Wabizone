@@ -113,19 +113,19 @@ class ApiUsuarioRepository implements IUsuarioRepository {
   @override
   Future<Usuario?> buscarPorNombre(String nombre) async {
     try {
-      print('LOG_BUSCAR: Iniciando búsqueda de usuario: $nombre');
+      final processedNombre = nombre.trim().toLowerCase();
+      print('LOG_BUSCAR: Iniciando búsqueda de usuario: $processedNombre');
 
       final response = await _dioClient.get(
         '$endpoint/buscar',
-        queryParameters: {'nombre': nombre},
+        queryParameters: {'nombre': processedNombre},
       );
 
-      // Si llegamos aquí, no hubo excepción
       print('LOG_BUSCAR: Código de respuesta: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         Map<String, dynamic> userData = response.data;
-        print('LOG_BUSCAR: Usuario encontrado: $nombre');
+        print('LOG_BUSCAR: Usuario encontrado: $processedNombre');
         return _mapearUsuario(userData);
       } else if (response.statusCode == 404) {
         print('LOG_BUSCAR: Usuario no encontrado por código 404');
@@ -136,13 +136,10 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         return null;
       }
     } catch (e) {
-      // Si el error es un 404, significa que el usuario no existe
       if (e.toString().contains('404') || e.toString().contains('not_found')) {
         print('LOG_BUSCAR: Exception 404 - Usuario no existe');
         return null;
       }
-
-      // Cualquier otro error, también asumimos que no existe para ser seguros
       print('LOG_BUSCAR: Error general: ${e.toString()}');
       return null;
     }

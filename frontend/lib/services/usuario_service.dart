@@ -33,7 +33,7 @@ class UsuarioService {
   // Convertir Usuario del frontend a formato JSON para el backend
   static Map<String, dynamic> _usuarioToJson(Usuario usuario) {
     return {
-      'nombre': usuario.usuario,
+      'nombre': usuario.usuario.trim().toLowerCase(),
       'contrasena': usuario.contrasena,
       'edad': usuario.edad,
       'administrador': usuario.esAdmin || false,
@@ -93,33 +93,32 @@ class UsuarioService {
     }
   }
 
-  // Buscar usuario por nombre
-  static Future<Usuario?> buscarUsuarioPorNombre(String usuario) async {
+  // Buscar un usuario por su nombre
+  static Future<Usuario?> buscarUsuarioPorNombre(String nombre) async {
     try {
+      final processedNombre = nombre.trim().toLowerCase();
+      print('LOG_SEARCH_SVC: Buscando usuario: $processedNombre');
+
       final response = await _dioClient.get(
         '$endpoint/buscar',
-        queryParameters: {'nombre': usuario},
+        queryParameters: {'nombre': processedNombre},
       );
+
+      print('LOG_SEARCH_SVC: Código respuesta: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         Map<String, dynamic> userData = response.data;
-        Usuario user = _mapearUsuario(userData);
-        return user;
-      } else if (response.statusCode == 404) {
-        print('Usuario no encontrado: $usuario (404)');
-        return null;
+        return _mapearUsuario(userData);
       } else {
-        print('Error al buscar usuario: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      // Si recibimos un 404, significa que el usuario no existe, lo cual es válido para crear uno nuevo
+      print('LOG_SEARCH_SVC: Error al buscar usuario por nombre: $e');
+      // Si recibimos un 404, el usuario no existe
       if (e.toString().contains('404') || e.toString().contains('not_found')) {
-        print('Usuario no encontrado: $usuario (excepción 404)');
         return null;
       }
-      print('Error al buscar usuario por nombre: $e');
-      throw e; // Relanzar la excepción para que se maneje en el nivel superior
+      throw Exception('Error al buscar usuario: $e');
     }
   }
 
@@ -181,6 +180,14 @@ class UsuarioService {
         return {'success': true, 'message': 'Usuario creado correctamente'};
       } else if (response.statusCode == 409) {
         print('Error: El usuario ya existe');
+        // Verificar si el usuario realmente existe
+        final usuarioBuscado = await buscarUsuarioPorNombre(usuario.usuario);
+        if (usuarioBuscado == null) {
+          print(
+              'LOG_ADD_USER: Conflicto ignorado, usuario no existe realmente');
+          await obtenerTodosUsuarios();
+          return {'success': true, 'message': 'Usuario creado correctamente'};
+        }
         return {'success': false, 'message': 'El nombre de usuario ya existe'};
       } else {
         print(

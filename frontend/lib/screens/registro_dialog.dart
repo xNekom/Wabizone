@@ -46,8 +46,13 @@ class _RegistroDialogState extends State<RegistroDialog> {
         _isLoading = true;
       });
 
+      // Procesamos el nombre de usuario (trim y minúsculas) para evitar falsos positivos
+      final usuarioNormalizado = _usuarioController.text.trim().toLowerCase();
+      print('Usuario normalizado: $usuarioNormalizado');
+
       print('Datos para registro:');
-      print('Usuario: ${_usuarioController.text}');
+      print('Usuario original: ${_usuarioController.text}');
+      print('Usuario normalizado: $usuarioNormalizado');
       print('Edad: ${_edadController.text}');
       print('Trato: $_selectedTrato');
       print('Lugar: $_selectedCapital');
@@ -56,7 +61,7 @@ class _RegistroDialogState extends State<RegistroDialog> {
         trato: _selectedTrato,
         imagen: _imagenPath ?? ImageUtils.getDefaultImage(false),
         edad: int.parse(_edadController.text),
-        usuario: _usuarioController.text,
+        usuario: usuarioNormalizado,
         contrasena: _contrasenaController.text,
         lugarNacimiento: _selectedCapital ?? "Madrid",
         bloqueado: false,
