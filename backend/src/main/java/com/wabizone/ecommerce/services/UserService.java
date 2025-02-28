@@ -32,24 +32,7 @@ public class UserService {
         user.setEdad(createRequest.edad());
         user.setAdministrador(createRequest.administrador());
         user.setTrato(createRequest.trato());
-        
-        // Procesamiento mejorado de la imagen para creación
-        String imagen = createRequest.imagen();
-        if (imagen != null) {
-            if (imagen.trim().isEmpty()) {
-                imagen = null;
-                System.out.println("Creación: Imagen vacía establecida como null");
-            } else if (imagen.startsWith("data:image")) {
-                // La imagen es una URL de datos (base64), la aceptamos tal cual
-                System.out.println("Creación: Imagen en formato data URL aceptada");
-            } else if (imagen.length() > 500) {
-                // Es probablemente una imagen en base64 sin el prefijo de URL de datos
-                imagen = "data:image/png;base64," + imagen;
-                System.out.println("Creación: Imagen grande convertida a formato data URL");
-            }
-        }
-        
-        user.setImagen(imagen);
+        user.setImagen(createRequest.imagen());
         user.setLugarNacimiento(createRequest.lugarNacimiento());
         user.setBloqueado(createRequest.bloqueado());
         return user;
@@ -84,28 +67,7 @@ public class UserService {
             user.setEdad(userUpdateRequest.edad());
             user.setAdministrador(userUpdateRequest.administrador());
             user.setTrato(userUpdateRequest.trato());
-            
-            // Manejo especial para la imagen
-            String imagen = userUpdateRequest.imagen();
-            
-            // Mejoramos el manejo de imágenes
-            if (imagen != null) {
-                if (imagen.trim().isEmpty()) {
-                    // Si la imagen es una cadena vacía, establecerla como null
-                    imagen = null;
-                    System.out.println("Imagen vacía establecida como null");
-                } else if (imagen.startsWith("data:image")) {
-                    // La imagen es una URL de datos (base64), la aceptamos tal cual
-                    System.out.println("Imagen en formato data URL aceptada");
-                } else if (imagen.length() > 500) {
-                    // Es probablemente una imagen en base64 sin el prefijo de URL de datos
-                    // Añadimos el prefijo para que sea una URL de datos válida
-                    imagen = "data:image/png;base64," + imagen;
-                    System.out.println("Imagen grande convertida a formato data URL");
-                }
-            }
-            
-            user.setImagen(imagen);
+            user.setImagen(userUpdateRequest.imagen());
             user.setLugarNacimiento(userUpdateRequest.lugarNacimiento());
             user.setBloqueado(userUpdateRequest.bloqueado());
             return userRepository.save(user);

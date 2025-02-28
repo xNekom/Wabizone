@@ -159,55 +159,16 @@ class UsuarioService {
         }
         print('El usuario no existe, continuando con la creación...');
       } catch (e) {
-        // Si falla la verificación, asumimos que el usuario no existe
+        // Si falla la verificación, continuamos con el intento de registro
         print('Error al verificar si el usuario existe: $e');
-        // No interrumpimos el flujo, continuamos con el registro
       }
 
       print('Enviando solicitud para crear usuario...');
-
-      // Preparar los datos para el envío
-      Map<String, dynamic> datosUsuario = _usuarioToJson(usuario);
-
-      // Verificar y procesar la imagen correctamente
-      if (datosUsuario['imagen'] != null) {
-        String imagen = datosUsuario['imagen'].toString();
-
-        // Verificar si la imagen está vacía
-        if (imagen.trim().isEmpty) {
-          print('Imagen vacía, estableciendo a null');
-          datosUsuario['imagen'] = null;
-        }
-        // Si la imagen es una cadena muy larga (probablemente base64)
-        else if (imagen.length > 500) {
-          print('Procesando imagen larga: ${imagen.length} caracteres');
-
-          // Asegurar que la imagen tiene el prefijo correcto
-          if (!imagen.startsWith('data:image')) {
-            print('Añadiendo prefijo data:URL a la imagen');
-            imagen = 'data:image/png;base64,' +
-                imagen.replaceAll(RegExp(r'^data:image\/[^;]+;base64,'), '');
-          }
-
-          // Limitar longitud si es extremadamente grande (ejemplo: limitar a ~100KB)
-          // Esto es una solución temporal - lo ideal sería comprimir la imagen real
-          if (imagen.length > 100000) {
-            print(
-                '¡Alerta! Imagen demasiado grande (${imagen.length} caracteres), truncando');
-            imagen = imagen.substring(0, 100000);
-            print('Imagen truncada a ${imagen.length} caracteres');
-          }
-
-          datosUsuario['imagen'] = imagen;
-        }
-      }
-
-      print(
-          'Datos a enviar: ${datosUsuario['nombre']} (imagen: ${datosUsuario['imagen']?.length ?? 0} caracteres)');
+      print('Datos a enviar: ${_usuarioToJson(usuario)}');
 
       final response = await _dioClient.post(
         endpoint,
-        data: datosUsuario,
+        data: _usuarioToJson(usuario),
       );
 
       print('Respuesta del servidor: ${response.statusCode}');
@@ -218,23 +179,16 @@ class UsuarioService {
         await obtenerTodosUsuarios();
         return {'success': true, 'message': 'Usuario creado correctamente'};
       } else if (response.statusCode == 409) {
-        print('Error: El usuario ya existe según el servidor');
-        // Intentar verificar de nuevo
-        try {
-          final usuarioBuscado = await buscarUsuarioPorNombre(usuario.usuario);
-          if (usuarioBuscado == null) {
-            print(
-                'Conflicto ignorado, usuario no existe realmente. Reintentando...');
-            // Podríamos intentar de nuevo, pero por ahora reportamos un error
-          }
-        } catch (searchError) {
+        print('Error: El usuario ya existe');
+        // Verificar si el usuario realmente existe
+        final usuarioBuscado = await buscarUsuarioPorNombre(usuario.usuario);
+        if (usuarioBuscado == null) {
           print(
-              'Error al verificar usuario después de conflicto: $searchError');
+              'LOG_ADD_USER: Conflicto ignorado, usuario no existe realmente');
+          await obtenerTodosUsuarios();
+          return {'success': true, 'message': 'Usuario creado correctamente'};
         }
-        return {
-          'success': false,
-          'message': 'El nombre de usuario ya existe según el servidor'
-        };
+        return {'success': false, 'message': 'El nombre de usuario ya existe'};
       } else {
         print(
             'Error al agregar usuario: ${response.statusCode} - ${response.data}');
@@ -254,60 +208,12 @@ class UsuarioService {
   static Future<bool> actualizarUsuario(Usuario usuario, int id) async {
     try {
       print('Actualizando usuario con ID: $id');
-      if (id <= 0) {
-        print('ERROR: ID de usuario inválido ($id). No se puede actualizar.');
-        return false;
-      }
-
-      // Preparar los datos, asegurando que la imagen esté en formato correcto
-      Map<String, dynamic> datosActualizados = _usuarioToJson(usuario);
-
-      // Asegurarnos que la imagen es procesada correctamente
-      if (datosActualizados['imagen'] != null) {
-        String imagen = datosActualizados['imagen'].toString();
-
-        // Verificar si está vacía
-        if (imagen.trim().isEmpty) {
-          print('La imagen estaba vacía, estableciendo a null');
-          datosActualizados['imagen'] = null;
-        }
-        // Verificar si es una cadena muy larga (probablemente base64)
-        else if (imagen.length > 500) {
-          print(
-              'Procesando imagen larga para actualización: ${imagen.length} caracteres');
-
-          // Asegurar que tiene el prefijo correcto
-          if (!imagen.startsWith('data:image')) {
-            print('Añadiendo prefijo data:URL a la imagen');
-            imagen = 'data:image/png;base64,' +
-                imagen.replaceAll(RegExp(r'^data:image\/[^;]+;base64,'), '');
-          }
-
-          // Limitar longitud si es extremadamente grande
-          if (imagen.length > 100000) {
-            print(
-                '¡Alerta! Imagen demasiado grande (${imagen.length} caracteres), truncando');
-            imagen = imagen.substring(0, 100000);
-            print('Imagen truncada a ${imagen.length} caracteres');
-          }
-
-          datosActualizados['imagen'] = imagen;
-        }
-      }
-
-      print(
-          'Datos a enviar: ${datosActualizados['nombre']} (imagen: ${datosActualizados['imagen']?.length ?? 0} caracteres)');
-
-      // Construir URL completa para debugging
-      final endpointCompleto = '$endpoint/$id';
-      print('URL completa para actualización: $endpointCompleto');
+      print('Datos a enviar: ${_usuarioToJson(usuario)}');
 
       final response = await _dioClient.put(
-        endpointCompleto,
-        data: datosActualizados,
+        '$endpoint/$id',
+        data: _usuarioToJson(usuario),
       );
-
-      print('Respuesta del servidor: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         print('Usuario actualizado con éxito');

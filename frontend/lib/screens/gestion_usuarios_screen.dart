@@ -331,93 +331,19 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         esAdmin: esAdmin,
                       );
 
-                      // Obtener y convertir el ID a entero para la API
+                      // Convertir el ID a entero para la API
                       int userId = 0;
-                      if (usuario.id != null && usuario.id!.isNotEmpty) {
-                        try {
-                          userId = int.parse(usuario.id!);
-                          print('ID obtenido del objeto usuario: $userId');
-                        } catch (e) {
-                          print('Error al parsear ID "${usuario.id}": $e');
-
-                          // Si el ID no es válido, intentamos encontrarlo en la caché por nombre de usuario
-                          final usuariosCache =
-                              await UsuarioService.obtenerTodosUsuarios();
-                          final usuarioEncontrado = usuariosCache.firstWhere(
-                              (u) =>
-                                  u.usuario.toLowerCase() ==
-                                  usuario.usuario.toLowerCase(),
-                              orElse: () => usuario);
-
-                          if (usuarioEncontrado.id != null &&
-                              usuarioEncontrado.id != usuario.id) {
-                            try {
-                              userId = int.parse(usuarioEncontrado.id!);
-                              print('ID encontrado en caché: $userId');
-                            } catch (e) {
-                              print('Error al parsear ID de caché: $e');
-                            }
-                          }
-
-                          // Si aún no tenemos un ID válido, buscaremos el usuario por nombre
-                          if (userId <= 0) {
-                            try {
-                              final usuarioBuscado =
-                                  await UsuarioService.buscarUsuarioPorNombre(
-                                      usuario.usuario);
-                              if (usuarioBuscado != null &&
-                                  usuarioBuscado.id != null) {
-                                userId = int.parse(usuarioBuscado.id!);
-                                print(
-                                    'ID obtenido desde buscarUsuarioPorNombre: $userId');
-                              }
-                            } catch (searchError) {
-                              print(
-                                  'Error al buscar usuario por nombre: $searchError');
-                            }
-                          }
-                        }
-                      } else {
-                        print(
-                            'ID no disponible en el objeto usuario, buscando alternativas...');
-                        try {
-                          // Intentar obtener el usuario de la caché por nombre
-                          final usuariosCache =
-                              await UsuarioService.obtenerTodosUsuarios();
-                          final usuarioEncontrado = usuariosCache.firstWhere(
-                              (u) =>
-                                  u.usuario.toLowerCase() ==
-                                  usuario.usuario.toLowerCase(),
-                              orElse: () => Usuario(
-                                  id: "0",
-                                  trato: "",
-                                  imagen: "",
-                                  edad: 0,
-                                  usuario: "",
-                                  contrasena: "",
-                                  lugarNacimiento: ""));
-
-                          if (usuarioEncontrado.id != null) {
-                            userId = int.parse(usuarioEncontrado.id!);
-                            print('ID encontrado en caché: $userId');
-                          }
-                        } catch (e) {
-                          print('Error al buscar usuario en caché: $e');
-                        }
+                      try {
+                        userId = int.parse(usuario.id ?? "0");
+                      } catch (e) {
+                        print('Error al parsear ID de usuario: $e');
+                        // Intentar extraer números del nombre de usuario como fallback
+                        String numericString =
+                            usuario.usuario.replaceAll(RegExp(r'[^0-9]'), '');
+                        userId = numericString.isEmpty
+                            ? 0
+                            : int.parse(numericString);
                       }
-
-                      // Validar que tenemos un ID válido
-                      if (userId <= 0) {
-                        print(
-                            'ERROR: No se pudo obtener un ID válido para el usuario ${usuario.usuario}');
-                        DialogUtils.showSnackBar(context,
-                            "No se pudo actualizar el usuario: ID inválido",
-                            color: Constants.errorColor);
-                        Navigator.of(dialogContext).pop(); // Cierra el spinner
-                        return;
-                      }
-
-                      print('ID final para actualización: $userId');
 
                       bool success = await UsuarioService.actualizarUsuario(
                           usuarioActualizado, userId);
