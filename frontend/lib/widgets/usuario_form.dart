@@ -123,9 +123,24 @@ class _UsuarioFormState extends State<UsuarioForm> {
             ),
             IconButton(
               onPressed: () async {
-                String? newPath = await ImageUtils.pickImage();
-                if (newPath != null && mounted) {
-                  widget.onImagenChanged(newPath);
+                try {
+                  String? newPath =
+                      await ImageUtils.pickAndProcessImage(maxLength: 80000);
+                  if (newPath != null && mounted) {
+                    print(
+                        'Nueva imagen seleccionada: ${newPath.length} caracteres');
+                    widget.onImagenChanged(newPath);
+                  }
+                } catch (e) {
+                  print('Error al seleccionar imagen: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al procesar imagen: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
               icon: const Icon(Icons.image),

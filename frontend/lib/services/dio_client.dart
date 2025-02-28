@@ -52,13 +52,15 @@ class DioClient {
       return response;
     } on DioException catch (e) {
       print('DIO_GET: Error capturado: ${e.type} - ${e.message}');
+      print(
+          'DIO_GET: Detalles del error - statusCode: ${e.response?.statusCode}, path: ${path}');
 
-      // Para llamadas específicas a buscar usuario, manejamos 404 sin lanzar excepción
+      // Para llamadas a rutas de búsqueda de usuario, manejamos 404 sin lanzar excepción
       if (e.response?.statusCode == 404 &&
-          path.contains('/buscar') &&
-          queryParameters != null &&
-          queryParameters.containsKey('nombre')) {
-        print('DIO_GET: Retornando 404 normal para buscarPorNombre');
+          (path.contains('/buscar') || path.contains('/users')) &&
+          queryParameters != null) {
+        print(
+            'DIO_GET: Retornando 404 normal para rutas relacionadas con usuarios');
         return Response(
           statusCode: 404,
           requestOptions: e.requestOptions,
@@ -93,8 +95,90 @@ class DioClient {
   Future<Response> put(String path,
       {dynamic data, Map<String, dynamic>? queryParameters}) async {
     try {
-      return await _dio.put(path, data: data, queryParameters: queryParameters);
+      print('DIO_PUT: Enviando PUT a $path');
+      if (data != null) {
+        print('DIO_PUT: Datos: $data');
+      }
+
+      // Verificar que la URL está bien formada para la depuración
+      String fullUrl =
+          path.startsWith('http') ? path : _dio.options.baseUrl + path;
+      print('DIO_PUT: URL completa: $fullUrl');
+
+      // Verificar si es una operación sobre usuario y validar el ID
+      if (path.contains('/users/')) {
+        final idMatch = RegExp(r'/users/(\d+)').firstMatch(path);
+        if (idMatch != null) {
+          final userId = idMatch.group(1);
+          print('DIO_PUT: Actualizando usuario con ID: $userId');
+
+          // Aquí podríamos hacer una verificación previa para confirmar que el ID existe
+          try {
+            final checkResponse = await _dio.get('/users/$userId');
+            if (checkResponse.statusCode == 200) {
+              print(
+                  'DIO_PUT: Verificación previa exitosa, el usuario con ID $userId existe');
+            }
+          } catch (e) {
+            print(
+                'DIO_PUT: Verificación previa falló, el usuario con ID probablemente no existe: $e');
+            // No lanzamos excepción aquí, continuamos con el PUT y manejamos el error después
+          }
+        } else {
+          print(
+              'DIO_PUT: ¡Advertencia! No se pudo extraer ID de usuario de la URL: $path');
+        }
+      }
+
+      final response =
+          await _dio.put(path, data: data, queryParameters: queryParameters);
+
+      print('DIO_PUT: Respuesta recibida con código: ${response.statusCode}');
+      return response;
     } on DioException catch (e) {
+      print('DIO_PUT: Error capturado: ${e.type} - ${e.message}');
+      print('DIO_PUT: URL que causó el error: ${e.requestOptions.path}');
+      print('DIO_PUT: Status code: ${e.response?.statusCode}');
+
+      if (e.response?.statusCode == 404) {
+        print('DIO_PUT: 404 - Recurso no encontrado - Verificar ID y ruta');
+
+        // Si es una operación sobre usuario, proporcionar más información
+        if (e.requestOptions.path.contains('/users/')) {
+          final idMatch =
+              RegExp(r'/users/(\d+)').firstMatch(e.requestOptions.path);
+          if (idMatch != null) {
+            final userId = idMatch.group(1);
+            print(
+                'DIO_PUT: Error 404 al actualizar usuario con ID: $userId - El usuario no existe');
+
+            // Información adicional para depuración
+            print(
+                'DIO_PUT: Intentando listar todos los usuarios para verificar IDs disponibles...');
+            try {
+              final usersResponse = await _dio.get('/users');
+              if (usersResponse.statusCode == 200 &&
+                  usersResponse.data is List) {
+                final List users = usersResponse.data;
+                print('DIO_PUT: Usuarios disponibles: ${users.length}');
+                for (var user in users) {
+                  if (user is Map && user.containsKey('id')) {
+                    print(
+                        'DIO_PUT: Usuario disponible - ID: ${user['id']}, Nombre: ${user['nombre']}');
+                  }
+                }
+              }
+            } catch (listError) {
+              print('DIO_PUT: Error al listar usuarios: $listError');
+            }
+          }
+        }
+
+        // Lanzar excepción específica para 404
+        throw Exception(
+            'Recurso no encontrado (404) - La ruta ${e.requestOptions.path} no existe en el servidor');
+      }
+
       throw _handleError(e);
     }
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/constants_utils.dart';
-import 'dart:html' as html;
-import 'dart:io';
+import 'dart:io' as io;
 
 class DrawerGeneral extends StatelessWidget {
   final VoidCallback onCerrarSesion;
@@ -50,12 +49,14 @@ class DrawerGeneral extends StatelessWidget {
 
   void _handleSalir(BuildContext context) {
     try {
-      if (Platform.isAndroid || Platform.isIOS) {
-        exit(0);
+      // Intentar salir en plataformas móviles
+      if (io.Platform.isAndroid || io.Platform.isIOS) {
+        io.exit(0);
       } else {
-        // Intenta cerrar la pestaña en navegadores web
-        html.window.close();
-        // Si no se puede cerrar, muestra un mensaje
+        // En web u otras plataformas, ejecutar la función de salir
+        onSalir();
+
+        // Mostrar mensaje informativo
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Por favor, cierre esta pestaña manualmente'),
@@ -63,6 +64,9 @@ class DrawerGeneral extends StatelessWidget {
         );
       }
     } catch (e) {
+      // Ejecutar la función de salir en caso de error
+      onSalir();
+
       // Maneja el caso de plataformas no soportadas
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

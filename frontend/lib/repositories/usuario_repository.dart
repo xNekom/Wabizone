@@ -136,10 +136,16 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         return null;
       }
     } catch (e) {
-      if (e.toString().contains('404') || e.toString().contains('not_found')) {
+      print('LOG_BUSCAR: Error capturado: ${e.toString()}');
+      // Si el error es 404, significa que el usuario no existe
+      if (e.toString().contains('404') ||
+          e.toString().contains('not_found') ||
+          e.toString().contains('DioException') &&
+              e.toString().contains('404')) {
         print('LOG_BUSCAR: Exception 404 - Usuario no existe');
         return null;
       }
+      // Para otros errores, los registramos pero retornamos null para mantener el flujo
       print('LOG_BUSCAR: Error general: ${e.toString()}');
       return null;
     }
@@ -218,14 +224,43 @@ class ApiUsuarioRepository implements IUsuarioRepository {
   @override
   Future<bool> actualizar(Usuario usuario, int id) async {
     try {
+      print('LOG_ACTUALIZAR: Iniciando actualización de usuario ID: $id');
+
+      // Preparar los datos para el envío
+      Map<String, dynamic> datos = _usuarioToJson(usuario);
+
+      // Verificar y procesar la imagen correctamente
+      if (datos['imagen'] != null) {
+        // Si la imagen es una cadena muy larga (probablemente base64), verificar que sea una URL de datos válida
+        if (datos['imagen'].toString().length > 500 &&
+            !datos['imagen'].toString().startsWith('data:image')) {
+          print(
+              'LOG_ACTUALIZAR: Formato de imagen inválido. Se procesa como base64.');
+          // Convertir a formato de URL de datos si no tiene el prefijo
+          datos['imagen'] = 'data:image/png;base64,' +
+              datos['imagen']
+                  .toString()
+                  .replaceAll(RegExp(r'^data:image\/[^;]+;base64,'), '');
+        }
+      }
+
+      print('LOG_ACTUALIZAR: Enviando solicitud PUT a $endpoint/$id');
       final response = await _dioClient.put(
         '$endpoint/$id',
-        data: _usuarioToJson(usuario),
+        data: datos,
       );
 
-      return response.statusCode == 200;
+      print('LOG_ACTUALIZAR: Respuesta recibida ${response.statusCode}');
+      if (response.statusCode == 200) {
+        print('LOG_ACTUALIZAR: Usuario actualizado correctamente');
+        return true;
+      } else {
+        print(
+            'LOG_ACTUALIZAR: Error al actualizar. Código: ${response.statusCode}');
+        return false;
+      }
     } catch (e) {
-      print('Error al actualizar usuario: $e');
+      print('LOG_ACTUALIZAR: Excepción al actualizar usuario: $e');
       return false;
     }
   }
