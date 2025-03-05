@@ -8,6 +8,9 @@ import '../utils/button_styles.dart';
 import 'registro_dialog.dart';
 import 'home_screen.dart';
 import 'admin_home_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/usuario_provider.dart';
+import '../providers/carrito_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,53 +25,94 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  Future<void> _iniciarSesion() async {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      String usuario = _usuarioController.text;
-      String contrasena = _contrasenaController.text;
-
       try {
-        String? mensajeError =
-            await UsuarioService.validarUsuario(usuario, contrasena);
+        final usuarioProvider =
+            Provider.of<UsuarioProvider>(context, listen: false);
+
+        print(
+            'LOGIN_SCREEN: Intentando iniciar sesión con usuario: ${_usuarioController.text}');
+
+        final success = await usuarioProvider.login(
+            _usuarioController.text, _contrasenaController.text);
+
         if (!mounted) return;
 
-        if (mensajeError != null) {
-          DialogUtils.showSnackBar(context, mensajeError,
-              color: Constants.errorColor);
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
+        if (success) {
+          // Transferir carrito si hay uno
+          final carritoProvider =
+              Provider.of<CarritoProvider>(context, listen: false);
+          if (usuarioProvider.usuarioActual != null) {
+            await carritoProvider.transferCartToUser(
+                int.parse(usuarioProvider.usuarioActual!.id!));
+          }
 
-        Usuario? user = await UsuarioService.buscarUsuario(usuario, contrasena);
-        if (!mounted) return;
+          print('LOGIN_SCREEN: Inicio de sesión exitoso, redirigiendo a home');
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          // Verificar si el error es de usuario bloqueado
+          final errorMsg = usuarioProvider.error.toLowerCase();
+          print('LOGIN_SCREEN: Error de inicio de sesión: $errorMsg');
 
-        if (user != null) {
-          if (user.esAdmin) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => AdminHomeScreen(usuario: user)),
+          if (errorMsg.contains('baneado') ||
+              errorMsg.contains('bloqueado') ||
+              errorMsg.contains('403') ||
+              errorMsg.contains('forbidden')) {
+            print(
+                'LOGIN_SCREEN: Detectado usuario bloqueado, mostrando diálogo especial');
+            // Mostrar un diálogo específico para usuarios bloqueados
+            if (!mounted) return;
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.block, color: Colors.red),
+                    SizedBox(width: 10),
+                    Text('Cuenta bloqueada'),
+                  ],
+                ),
+                content: Text(
+                  'Has sido baneado, por favor contacta con un administrador',
+                  style: TextStyle(fontSize: 16),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text('Aceptar'),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                  ),
+                ],
+              ),
             );
           } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => HomeScreen(usuario: user)),
+            // Mostrar el error normal
+            print('LOGIN_SCREEN: Mostrando error estándar en SnackBar');
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(usuarioProvider.error),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         }
       } catch (e) {
+        print('LOGIN_SCREEN: Error en proceso de login: $e');
         if (!mounted) return;
-
-        DialogUtils.showSnackBar(
-            context, "Error al conectar con el servidor: ${e.toString()}",
-            color: Constants.errorColor);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() {
@@ -156,77 +200,101 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Inicio de Sesión",
-            style: TextStyle(color: Colors.white)),
-        backgroundColor: Constants.primaryColor,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Card(
-            elevation: 4,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
+    return Consumer<UsuarioProvider>(
+      builder: (context, usuarioProvider, child) {
+        if (usuarioProvider.isLoggedIn) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (usuarioProvider.isAdmin) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => AdminHomeScreen(
+                        usuario: usuarioProvider.usuarioActual!)),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        HomeScreen(usuario: usuarioProvider.usuarioActual!)),
+              );
+            }
+          });
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Inicio de Sesión",
+                style: TextStyle(color: Colors.white)),
+            backgroundColor: Constants.primaryColor,
+          ),
+          body: Center(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    Image.asset("assets/imagenes/logo.png", height: 150),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _usuarioController,
-                      decoration: const InputDecoration(
-                        labelText: "Usuario",
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: ValidationUtils.validateRequired,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _contrasenaController,
-                      decoration: const InputDecoration(
-                        labelText: "Contraseña",
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
-                      validator: ValidationUtils.validateRequired,
-                    ),
-                    const SizedBox(height: 16),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: _iniciarSesion,
-                            style: estiloBoton(),
-                            child: const Text("Iniciar Sesión"),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        Image.asset("assets/imagenes/logo.png", height: 150),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _usuarioController,
+                          decoration: const InputDecoration(
+                            labelText: "Usuario",
+                            border: OutlineInputBorder(),
                           ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _olvidasteContrasena,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Constants.primaryColor,
-                      ),
-                      child: const Text("¿Olvidaste tu contraseña?"),
+                          validator: ValidationUtils.validateRequired,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _contrasenaController,
+                          decoration: const InputDecoration(
+                            labelText: "Contraseña",
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                          validator: ValidationUtils.validateRequired,
+                        ),
+                        const SizedBox(height: 16),
+                        _isLoading
+                            ? const CircularProgressIndicator()
+                            : ElevatedButton(
+                                onPressed: _login,
+                                style: estiloBoton(),
+                                child: const Text("Iniciar Sesión"),
+                              ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _olvidasteContrasena,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Constants.primaryColor,
+                          ),
+                          child: const Text("¿Olvidaste tu contraseña?"),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (context) => const RegistroDialog(),
+                          ),
+                          style: estiloBoton(),
+                          child: const Text("Registro"),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => showDialog(
-                        context: context,
-                        builder: (context) => const RegistroDialog(),
-                      ),
-                      style: estiloBoton(),
-                      child: const Text("Registro"),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -31,6 +31,11 @@ El backend se ejecutará en `http://localhost:8080`.
 - Flutter SDK
 - Dart
 
+### Características
+- Uso de la biblioteca **DIO** para peticiones HTTP
+- Patrón Singleton para manejo centralizado de la conexión API
+- Gestión automatizada de JSON y codificación UTF-8
+
 ### Ejecución
 
 ```bash
@@ -52,6 +57,7 @@ flutter build ios  # Para iOS (requiere macOS)
 
 - El backend utiliza configuraciones en `application.properties`
 - La conexión entre frontend y backend está configurada mediante CORS
+- Las URL base de las APIs están centralizadas en el cliente DIO
 
 ## Desarrolladores
 

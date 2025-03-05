@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/usuario.dart';
-import '../services/usuario_service.dart';
+import '../providers/usuario_provider.dart';
+import '../utils/constants_utils.dart';
 import '../utils/dialog_utils.dart';
 import '../utils/image_utils.dart';
-import '../utils/constants_utils.dart';
 import '../utils/button_styles.dart';
 import '../widgets/registro_form.dart';
 
@@ -23,12 +24,19 @@ class _RegistroDialogState extends State<RegistroDialog> {
   final TextEditingController _contrasenaController = TextEditingController();
   final TextEditingController _repiteContrasenaController =
       TextEditingController();
+  final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _apellidosController = TextEditingController();
   String? _selectedCapital = "A Coruña";
   bool _aceptaTerminos = false;
   bool _isLoading = false;
 
   Future<void> _registrar() async {
-    if (_formKey.currentState!.validate()) {
+    print('Botón de Registro presionado');
+
+    final isValid = _formKey.currentState!.validate();
+    print('Formulario válido: $isValid');
+
+    if (isValid) {
       if (!_aceptaTerminos) {
         DialogUtils.showSnackBar(
             context, "Debe aceptar los términos y condiciones",
@@ -40,31 +48,74 @@ class _RegistroDialogState extends State<RegistroDialog> {
         _isLoading = true;
       });
 
+      // Procesamos el nombre de usuario (trim y minúsculas) para evitar falsos positivos
+      final usuarioNormalizado = _usuarioController.text.trim().toLowerCase();
+      print('Usuario normalizado: $usuarioNormalizado');
+
+      print('Datos para registro:');
+      print('Usuario original: ${_usuarioController.text}');
+      print('Usuario normalizado: $usuarioNormalizado');
+      print('Edad: ${_edadController.text}');
+      print('Trato: $_selectedTrato');
+      print('Lugar: $_selectedCapital');
+
       Usuario nuevoUsuario = Usuario(
         trato: _selectedTrato,
-        imagen: _imagenPath ?? "",
+        imagen: _imagenPath ?? ImageUtils.getDefaultImage(false),
         edad: int.parse(_edadController.text),
-        usuario: _usuarioController.text,
+        usuario: usuarioNormalizado,
         contrasena: _contrasenaController.text,
-        lugarNacimiento: _selectedCapital ?? "",
+        lugarNacimiento: _selectedCapital ?? "Madrid",
         bloqueado: false,
         esAdmin: false,
       );
 
       try {
-        Map<String, dynamic> result =
-            await UsuarioService.agregarUsuario(nuevoUsuario);
+        final usuarioProvider =
+            Provider.of<UsuarioProvider>(context, listen: false);
+        print('Llamando a usuarioProvider.registrar...');
+        final Map<String, dynamic> result =
+            await usuarioProvider.registrar(nuevoUsuario);
+
+        print('Resultado del registro: $result');
+
         if (!mounted) return;
 
         if (result['success']) {
-          DialogUtils.showSnackBar(context, result['message'],
-              color: Constants.successColor);
-          Navigator.pop(context);
+          // Mostrar un mensaje más descriptivo y amigable para el usuario
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext dialogContext) {
+              return AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Constants.successColor),
+                    SizedBox(width: 10),
+                    Text('¡Registro exitoso!')
+                  ],
+                ),
+                content: Text(
+                    'Usuario registrado correctamente. Ya puedes iniciar sesión.'),
+                actions: [
+                  TextButton(
+                    child: Text('Aceptar'),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(context)
+                          .pop(); // Cerrar el diálogo de registro
+                    },
+                  ),
+                ],
+              );
+            },
+          );
         } else {
           DialogUtils.showSnackBar(context, result['message'],
               color: Constants.errorColor);
         }
       } catch (e) {
+        print('Error en registro: $e');
         if (!mounted) return;
 
         DialogUtils.showSnackBar(
@@ -86,6 +137,8 @@ class _RegistroDialogState extends State<RegistroDialog> {
     _usuarioController.dispose();
     _contrasenaController.dispose();
     _repiteContrasenaController.dispose();
+    _nombreController.dispose();
+    _apellidosController.dispose();
     super.dispose();
   }
 
@@ -124,6 +177,8 @@ class _RegistroDialogState extends State<RegistroDialog> {
                 onTerminosChanged: (value) =>
                     setState(() => _aceptaTerminos = value ?? false),
                 capitales: Constants.capitales,
+                nombreController: _nombreController,
+                apellidosController: _apellidosController,
               ),
       ),
       actions: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/usuario.dart';
 import '../utils/validation_utils.dart';
 import '../utils/image_utils.dart';
+import '../utils/constants_utils.dart';
 
 class UsuarioForm extends StatefulWidget {
   final Usuario? usuario;
@@ -17,6 +18,10 @@ class UsuarioForm extends StatefulWidget {
   final Function(String?) onTratoChanged;
   final Function(String?) onImagenChanged;
   final Function(bool?) onAdminChanged;
+  final String? selectedLugarNacimiento;
+  final Function(String?) onLugarNacimientoChanged;
+  final bool bloqueado;
+  final Function(bool?) onBloqueadoChanged;
 
   const UsuarioForm({
     super.key,
@@ -32,6 +37,10 @@ class UsuarioForm extends StatefulWidget {
     required this.onTratoChanged,
     required this.onImagenChanged,
     required this.onAdminChanged,
+    this.selectedLugarNacimiento,
+    required this.onLugarNacimientoChanged,
+    this.bloqueado = false,
+    required this.onBloqueadoChanged,
   });
 
   @override
@@ -41,6 +50,12 @@ class UsuarioForm extends StatefulWidget {
 class _UsuarioFormState extends State<UsuarioForm> {
   @override
   Widget build(BuildContext context) {
+    print('Renderizando UsuarioForm - isEditing: ${widget.isEditing}');
+    print('Usuario: ${widget.usuarioController.text}');
+    print(
+        'Contraseña: ${widget.contrasenaController.text.isNotEmpty ? '****' : 'vacía'}');
+    print('Edad: ${widget.edadController.text}');
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -51,49 +66,133 @@ class _UsuarioFormState extends State<UsuarioForm> {
           }).toList(),
           onChanged: widget.onTratoChanged,
           decoration: const InputDecoration(labelText: "Trato"),
+          validator: (value) {
+            print('Validando trato: $value');
+            return value == null || value.isEmpty
+                ? 'El trato es obligatorio'
+                : null;
+          },
         ),
         TextFormField(
           controller: widget.usuarioController,
           decoration: const InputDecoration(labelText: "Usuario"),
-          enabled: !widget.isEditing,
-          validator: ValidationUtils.validateRequired,
+          validator: (value) {
+            print('Validando usuario: $value');
+            return ValidationUtils.validateRequired(value);
+          },
         ),
         TextFormField(
           controller: widget.contrasenaController,
           decoration: const InputDecoration(labelText: "Contraseña"),
           obscureText: true,
-          validator: ValidationUtils.validatePassword,
+          validator: (value) {
+            print('Validando contraseña: $value');
+            return ValidationUtils.validatePassword(value);
+          },
         ),
         TextFormField(
           controller: widget.edadController,
           decoration: const InputDecoration(labelText: "Edad"),
           keyboardType: TextInputType.number,
-          validator: ValidationUtils.validateAge,
+          validator: (value) {
+            print('Validando edad: $value');
+            return ValidationUtils.validateAge(value);
+          },
         ),
+        DropdownButtonFormField<String>(
+          value: widget.selectedLugarNacimiento ?? "Madrid",
+          items: Constants.capitales.map((capital) {
+            return DropdownMenuItem(value: capital, child: Text(capital));
+          }).toList(),
+          onChanged: widget.onLugarNacimientoChanged,
+          decoration: const InputDecoration(labelText: "Lugar de Nacimiento"),
+          validator: (value) {
+            return value == null || value.isEmpty
+                ? 'El lugar de nacimiento es obligatorio'
+                : null;
+          },
+        ),
+        const SizedBox(height: 10),
         Row(
           children: [
+            if (widget.imagenPath != null)
+              Container(
+                width: 60,
+                height: 60,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: ImageUtils.getImageProvider(widget.imagenPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             Expanded(
-              child: Text(
-                widget.imagenPath ?? "No se ha seleccionado imagen",
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Imagen de perfil:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.imagenPath != null
+                        ? widget.imagenPath!.length > 30
+                            ? "Imagen seleccionada"
+                            : widget.imagenPath!
+                        : "No se ha seleccionado imagen",
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
             IconButton(
               onPressed: () async {
+                // Mostrar mensaje informativo sobre el redimensionamiento automático
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Ahora puedes usar imágenes más grandes (hasta 16MB). Las imágenes muy grandes se optimizarán automáticamente.',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.blue,
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+
                 String? newPath = await ImageUtils.pickImage();
                 if (newPath != null && mounted) {
                   widget.onImagenChanged(newPath);
+                } else if (newPath == null && mounted) {
+                  // Si la imagen no pudo ser procesada adecuadamente
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'No se pudo procesar la imagen. Se usará la imagen por defecto.',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                  // Asignar null para usar la imagen por defecto
+                  widget.onImagenChanged(null);
                 }
               },
               icon: const Icon(Icons.image),
+              tooltip: "Seleccionar imagen",
             ),
             if (widget.imagenPath != null)
               IconButton(
                 onPressed: () => widget.onImagenChanged(null),
                 icon: const Icon(Icons.clear),
+                tooltip: "Eliminar imagen",
               ),
           ],
         ),
+        const SizedBox(height: 10),
         CheckboxListTile(
           title: const Text("Es Administrador"),
           value: widget.esAdmin,

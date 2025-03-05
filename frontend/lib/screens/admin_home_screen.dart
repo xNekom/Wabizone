@@ -7,6 +7,8 @@ import 'login_screen.dart';
 import 'gestion_usuarios_screen.dart';
 import 'gestion_productos_screen.dart';
 import 'gestion_pedidos_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/usuario_provider.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   final Usuario usuario;
@@ -18,6 +20,9 @@ class AdminHomeScreen extends StatefulWidget {
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
   void _cerrarSesion() {
+    // Llama a logout del provider para limpiar el estado
+    Provider.of<UsuarioProvider>(context, listen: false).logout();
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),

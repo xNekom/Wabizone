@@ -40,9 +40,6 @@ class ValidationUtils {
   static String? validateUsername(String? value, {bool isEditing = false}) {
     if (value == null || value.isEmpty) return "Campo obligatorio";
     if (value == "admin") return "Nombre de usuario no permitido";
-    if (!isEditing) {
-      return "El nombre de usuario ya existe";
-    }
     return null;
   }
 }
