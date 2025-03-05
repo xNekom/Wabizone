@@ -7,7 +7,6 @@ class CarritoService {
   final DioClient _dioClient = DioClient();
   final String _baseUrl = '/api/v1/cart';
 
-  // Obtener carrito por ID de sesión
   Future<ShoppingCart> getCartBySessionId(String sessionId) async {
     try {
       final response = await _dioClient.get('$_baseUrl/session/$sessionId');
@@ -22,7 +21,6 @@ class CarritoService {
     }
   }
 
-  // Obtener carrito por ID de usuario
   Future<ShoppingCart> getCartByUserId(int userId) async {
     try {
       final response = await _dioClient.get('$_baseUrl/user/$userId');
@@ -30,25 +28,18 @@ class CarritoService {
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 404) {
-          print(
-              'Carrito no encontrado para el usuario $userId, creando uno nuevo');
           try {
-            // Intentar crear un nuevo carrito para el usuario
             final newCart = await createNewCart(userId, null);
             return newCart;
           } catch (createError) {
-            print('Error al crear nuevo carrito: $createError');
-            // Si falla la creación, devolver un carrito vacío
             return ShoppingCart.empty();
           }
         }
       }
-      print('Error al obtener carrito del usuario $userId: $e');
       throw Exception('Error obteniendo carrito: $e');
     }
   }
 
-  // Añadir ítem al carrito
   Future<ShoppingCart> addItemToCart(String cartId, CartItem item) async {
     try {
       final response = await _dioClient.post(
@@ -65,7 +56,6 @@ class CarritoService {
     }
   }
 
-  // Actualizar cantidad de un ítem en el carrito
   Future<ShoppingCart> updateItemQuantity(
       String cartId, int productoId, int cantidad) async {
     try {
@@ -83,7 +73,6 @@ class CarritoService {
     }
   }
 
-  // Eliminar ítem del carrito
   Future<ShoppingCart> removeItemFromCart(String cartId, int productoId) async {
     try {
       final response = await _dioClient.delete(
@@ -99,7 +88,6 @@ class CarritoService {
     }
   }
 
-  // Vaciar carrito
   Future<ShoppingCart> clearCart(String cartId) async {
     try {
       final response = await _dioClient.delete('$_baseUrl/$cartId');
@@ -113,7 +101,6 @@ class CarritoService {
     }
   }
 
-  // Transferir carrito de sesión a usuario
   Future<ShoppingCart> transferCartToUser(String sessionId, int userId) async {
     try {
       final response = await _dioClient.post(
@@ -133,7 +120,6 @@ class CarritoService {
     }
   }
 
-  // Crear un nuevo carrito
   Future<ShoppingCart> createNewCart(int? userId, String? sessionId) async {
     try {
       if (userId == null && sessionId == null) {

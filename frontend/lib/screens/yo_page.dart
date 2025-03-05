@@ -60,7 +60,6 @@ class YoPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Botones principales
           ElevatedButton.icon(
             onPressed: () => onTabChange(1),
             style: estiloBoton(),
@@ -80,10 +79,7 @@ class YoPage extends StatelessWidget {
             icon: const Icon(Icons.edit, color: Colors.white),
             label: const Text("Editar perfil"),
           ),
-
           const SizedBox(height: 32),
-
-          // Información de contacto
           Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
@@ -103,8 +99,6 @@ class YoPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Teléfono con acción
                   InkWell(
                     onTap: _launchPhone,
                     child: const ContactItem(
@@ -114,8 +108,6 @@ class YoPage extends StatelessWidget {
                       actionText: "Llamar ahora",
                     ),
                   ),
-
-                  // Email con acción
                   InkWell(
                     onTap: _launchEmail,
                     child: const ContactItem(
@@ -125,8 +117,6 @@ class YoPage extends StatelessWidget {
                       actionText: "Enviar correo",
                     ),
                   ),
-
-                  // Sitio web con acción
                   InkWell(
                     onTap: () => _launchURL("https://www.wabizone.com"),
                     child: const ContactItem(
@@ -136,8 +126,6 @@ class YoPage extends StatelessWidget {
                       actionText: "Visitar web",
                     ),
                   ),
-
-                  // Dirección con acción para abrir maps
                   InkWell(
                     onTap: _launchMaps,
                     child: const ContactItem(
@@ -151,10 +139,7 @@ class YoPage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Botón para ver más información de contacto
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

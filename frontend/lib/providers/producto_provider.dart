@@ -3,29 +3,23 @@ import '../models/producto.dart';
 import '../repositories/producto_repository.dart';
 import '../services/service_locator.dart';
 
-/// Provider para gestionar el estado relacionado con los productos
 class ProductoProvider with ChangeNotifier {
-  // Repositorio de productos
   final IProductoRepository _productoRepository;
 
-  // Estado del provider
   bool _isLoading = false;
   String _error = '';
   List<Producto> _productos = [];
   Producto? _productoSeleccionado;
 
-  // Getters para acceder al estado
   bool get isLoading => _isLoading;
   String get error => _error;
   List<Producto> get productos => _productos;
   Producto? get productoSeleccionado => _productoSeleccionado;
 
-  // Constructor que recibe el repositorio
   ProductoProvider({IProductoRepository? productoRepository})
       : _productoRepository =
             productoRepository ?? ServiceLocator().productoRepository;
 
-  /// Obtener todos los productos
   Future<void> obtenerTodosProductos() async {
     _setLoading(true);
     _setError('');
@@ -40,19 +34,16 @@ class ProductoProvider with ChangeNotifier {
     }
   }
 
-  /// Seleccionar un producto específico
   void seleccionarProducto(Producto producto) {
     _productoSeleccionado = producto;
     notifyListeners();
   }
 
-  /// Limpiar la selección de producto
   void limpiarSeleccion() {
     _productoSeleccionado = null;
     notifyListeners();
   }
 
-  /// Obtener un producto por su ID
   Future<Producto?> obtenerProductoPorId(String id) async {
     _setLoading(true);
     _setError('');
@@ -76,7 +67,6 @@ class ProductoProvider with ChangeNotifier {
     }
   }
 
-  /// Crear un nuevo producto
   Future<bool> crearProducto(Producto producto) async {
     _setLoading(true);
     _setError('');
@@ -85,7 +75,7 @@ class ProductoProvider with ChangeNotifier {
       final result = await _productoRepository.crear(producto);
 
       if (result) {
-        await obtenerTodosProductos(); // Refrescar la lista
+        await obtenerTodosProductos();
       } else {
         _setError('No se pudo crear el producto');
       }
@@ -95,7 +85,6 @@ class ProductoProvider with ChangeNotifier {
     } catch (e) {
       String errorMsg = e.toString();
 
-      // Detectar tipos específicos de errores
       if (errorMsg.contains('Data truncation') ||
           errorMsg.contains('too long for column')) {
         _setError(
@@ -113,7 +102,6 @@ class ProductoProvider with ChangeNotifier {
     }
   }
 
-  /// Actualizar un producto existente
   Future<bool> actualizarProducto(Producto producto, int id) async {
     _setLoading(true);
     _setError('');
@@ -122,13 +110,12 @@ class ProductoProvider with ChangeNotifier {
       final result = await _productoRepository.actualizar(producto, id);
 
       if (result) {
-        // Si es el producto seleccionado, actualizar la instancia
         if (_productoSeleccionado != null &&
             _productoSeleccionado!.id == producto.id) {
           _productoSeleccionado = producto;
         }
 
-        await obtenerTodosProductos(); // Refrescar la lista
+        await obtenerTodosProductos();
       } else {
         _setError('No se pudo actualizar el producto');
       }
@@ -138,7 +125,6 @@ class ProductoProvider with ChangeNotifier {
     } catch (e) {
       String errorMsg = e.toString();
 
-      // Detectar tipos específicos de errores
       if (errorMsg.contains('producto_no_encontrado')) {
         _setError(
             'No se encontró el producto con ID $id. Verifique que el producto existe.');
@@ -153,7 +139,6 @@ class ProductoProvider with ChangeNotifier {
     }
   }
 
-  /// Eliminar un producto
   Future<bool> eliminarProducto(String id) async {
     _setLoading(true);
     _setError('');
@@ -162,15 +147,13 @@ class ProductoProvider with ChangeNotifier {
       final result = await _productoRepository.eliminar(id);
 
       if (result) {
-        // Si es el producto seleccionado, limpiar la selección
         if (_productoSeleccionado != null && _productoSeleccionado!.id == id) {
           _productoSeleccionado = null;
         }
 
-        // Eliminar de la lista local
         _productos.removeWhere((producto) => producto.id == id);
 
-        await obtenerTodosProductos(); // Refrescar la lista completa
+        await obtenerTodosProductos();
       } else {
         _setError('No se pudo eliminar el producto');
       }
@@ -185,13 +168,11 @@ class ProductoProvider with ChangeNotifier {
     }
   }
 
-  // Método interno para establecer el estado de carga
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
 
-  // Método interno para establecer el mensaje de error
   void _setError(String errorMessage) {
     _error = errorMessage;
     if (errorMessage.isNotEmpty) {

@@ -81,9 +81,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     });
 
     try {
-      // Verificar si el nombre de usuario ha cambiado
       if (_usuarioController.text != widget.usuario.usuario) {
-        // Verificar si el nuevo nombre de usuario ya existe
         final usuarioExistente = await UsuarioService.buscarUsuarioPorNombre(
             _usuarioController.text);
         if (usuarioExistente != null) {
@@ -95,7 +93,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         }
       }
 
-      // Crear una copia del usuario con los nuevos datos
       final usuarioActualizado = Usuario(
         id: widget.usuario.id,
         trato: _tratoController.text,
@@ -108,12 +105,10 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         esAdmin: widget.usuario.esAdmin,
       );
 
-      // Actualizar el usuario en la base de datos
       final success = await UsuarioService.actualizarUsuario(
           usuarioActualizado, int.parse(widget.usuario.id ?? '0'));
 
       if (success) {
-        // Actualizar el usuario en el provider
         if (context.mounted) {
           final authProvider =
               Provider.of<AuthProvider>(context, listen: false);
@@ -160,7 +155,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Avatar con opción para cambiar
                     GestureDetector(
                       onTap: _selectImage,
                       child: Stack(
@@ -195,8 +189,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Mostrar mensaje de error si existe
                     if (_errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -208,8 +200,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                           ),
                         ),
                       ),
-
-                    // Campos de edición
                     CustomTextField(
                       controller: _usuarioController,
                       label: 'Nombre de Usuario',
@@ -225,7 +215,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     CustomTextField(
                       controller: _tratoController,
                       label: 'Trato',
@@ -238,7 +227,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     CustomTextField(
                       controller: _edadController,
                       label: 'Edad',
@@ -256,7 +244,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     CustomTextField(
                       controller: _lugarNacimientoController,
                       label: 'Lugar de Nacimiento',
@@ -269,8 +256,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-
-                    // Botón para guardar cambios
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

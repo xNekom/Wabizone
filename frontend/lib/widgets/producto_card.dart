@@ -27,8 +27,6 @@ class ProductoCard extends StatelessWidget {
             image: _buildProductImage(producto),
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              print(
-                  'Error cargando imagen para producto ${producto.id}: $error');
               return const Icon(Icons.broken_image, size: 40);
             },
           ),
@@ -61,10 +59,6 @@ class ProductoCard extends StatelessWidget {
   }
 
   ImageProvider _buildProductImage(Producto producto) {
-    // Información de depuración
-    ImageUtils.debugImage(producto.imagen, 'ProductoCard-Admin');
-
-    // Intentar cargar la imagen del producto
     return ImageUtils.getImageProvider(producto.imagen);
   }
 }

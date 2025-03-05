@@ -20,7 +20,6 @@ class AdminHomeScreen extends StatefulWidget {
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
   void _cerrarSesion() {
-    // Llama a logout del provider para limpiar el estado
     Provider.of<UsuarioProvider>(context, listen: false).logout();
 
     Navigator.pushAndRemoveUntil(

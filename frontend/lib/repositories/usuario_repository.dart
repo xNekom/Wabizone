@@ -1,40 +1,23 @@
 import '../models/usuario.dart';
 
-/// Interfaz que define las operaciones para el repositorio de usuarios
 abstract class IUsuarioRepository {
-  /// Valida las credenciales de un usuario
   Future<String?> validarCredenciales(String usuario, String contrasena);
-
-  /// Busca un usuario por sus credenciales
   Future<Usuario?> buscarPorCredenciales(String usuario, String contrasena);
-
-  /// Busca un usuario por su nombre
   Future<Usuario?> buscarPorNombre(String nombre);
-
-  /// Obtiene todos los usuarios
   Future<List<Usuario>> obtenerTodos();
-
-  /// Crea un nuevo usuario
   Future<Map<String, dynamic>> crear(Usuario usuario);
-
-  /// Actualiza un usuario existente
   Future<bool> actualizar(Usuario usuario, int id);
-
-  /// Elimina un usuario
   Future<bool> eliminar(int id);
 }
 
-/// Implementación del repositorio de usuarios que utiliza DIO para acceder a la API
 class ApiUsuarioRepository implements IUsuarioRepository {
   final String endpoint;
   final _dioClient;
 
-  // Caché local para usuarios
   List<Usuario> _usuariosCache = [];
 
   ApiUsuarioRepository(this._dioClient, {this.endpoint = '/users'});
 
-  // Convertir User del backend a Usuario del frontend
   Usuario _mapearUsuario(Map<String, dynamic> json) {
     return Usuario(
       id: json['id']?.toString(),
@@ -49,7 +32,6 @@ class ApiUsuarioRepository implements IUsuarioRepository {
     );
   }
 
-  // Convertir Usuario del frontend a formato JSON para el backend
   Map<String, dynamic> _usuarioToJson(Usuario usuario) {
     return {
       'nombre': usuario.usuario.trim().toLowerCase(),
@@ -66,7 +48,6 @@ class ApiUsuarioRepository implements IUsuarioRepository {
   @override
   Future<String?> validarCredenciales(String usuario, String contrasena) async {
     try {
-      print('LOG_LOGIN: Validando credenciales para usuario: $usuario');
       final response = await _dioClient.post(
         '$endpoint/login',
         queryParameters: {
@@ -75,23 +56,16 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         },
       );
 
-      print('LOG_LOGIN: Código de respuesta recibido: ${response.statusCode}');
-
       if (response.statusCode == 200) {
-        print('LOG_LOGIN: Autenticación exitosa');
-        return null; // Autenticación exitosa
+        return null;
       } else if (response.statusCode == 403) {
-        print('LOG_LOGIN: Código 403 - Usuario bloqueado');
         return "Has sido baneado, por favor contacta con un administrador";
       } else if (response.statusCode == 401) {
-        print('LOG_LOGIN: Código 401 - Credenciales incorrectas');
         return "Contraseña incorrecta. Por favor, verifica tus credenciales.";
       } else {
-        print('LOG_LOGIN: Código inesperado: ${response.statusCode}');
         return "Error de autenticación. Credenciales incorrectas.";
       }
     } catch (e) {
-      print('LOG_LOGIN: Excepción capturada: $e');
       String errorMsg = e.toString().toLowerCase();
 
       if (errorMsg.contains('403') ||
@@ -99,19 +73,14 @@ class ApiUsuarioRepository implements IUsuarioRepository {
           errorMsg.contains('bloqueado') ||
           errorMsg.contains('baneado') ||
           errorMsg.contains('usuario_bloqueado')) {
-        print(
-            'LOG_LOGIN: Manejando 403 - Usuario bloqueado o sin permisos: $endpoint/login');
         return "Has sido baneado, por favor contacta con un administrador";
       } else if (errorMsg.contains('404') || errorMsg.contains('not_found')) {
-        print('LOG_LOGIN: Manejando 404 - Usuario no encontrado');
         return "El usuario no existe. Por favor, verifica tu nombre de usuario.";
       } else if (errorMsg.contains('401') ||
           errorMsg.contains('unauthorized')) {
-        print('LOG_LOGIN: Manejando 401 - Credenciales incorrectas');
         return "Contraseña incorrecta. Por favor, verifica tus credenciales.";
       }
 
-      print('LOG_LOGIN: Error general de conexión');
       return "Error de conexión con el servidor: ${e.toString().replaceAll('Exception: ', '')}";
     }
   }
@@ -135,7 +104,6 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         return null;
       }
     } catch (e) {
-      print('Error al buscar usuario: $e');
       return null;
     }
   }
@@ -144,33 +112,21 @@ class ApiUsuarioRepository implements IUsuarioRepository {
   Future<Usuario?> buscarPorNombre(String nombre) async {
     try {
       final processedNombre = nombre.trim().toLowerCase();
-      print('LOG_BUSCAR: Iniciando búsqueda de usuario: $processedNombre');
 
       final response = await _dioClient.get(
         '$endpoint/buscar',
         queryParameters: {'nombre': processedNombre},
       );
 
-      print('LOG_BUSCAR: Código de respuesta: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         Map<String, dynamic> userData = response.data;
-        print('LOG_BUSCAR: Usuario encontrado: $processedNombre');
         return _mapearUsuario(userData);
       } else if (response.statusCode == 404) {
-        print('LOG_BUSCAR: Usuario no encontrado por código 404');
         return null;
       } else {
-        print(
-            'LOG_BUSCAR: Código de respuesta no esperado: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      if (e.toString().contains('404') || e.toString().contains('not_found')) {
-        print('LOG_BUSCAR: Exception 404 - Usuario no existe');
-        return null;
-      }
-      print('LOG_BUSCAR: Error general: ${e.toString()}');
       return null;
     }
   }
@@ -189,7 +145,6 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         return [];
       }
     } catch (e) {
-      print('Error al obtener usuarios: $e');
       return [];
     }
   }
@@ -197,34 +152,22 @@ class ApiUsuarioRepository implements IUsuarioRepository {
   @override
   Future<Map<String, dynamic>> crear(Usuario usuario) async {
     try {
-      print('LOG_CREAR: Intentando crear usuario: ${usuario.usuario}');
-
-      // Intentamos crear el usuario
-      print('LOG_CREAR: Enviando solicitud de creación');
-
       final response = await _dioClient.post(
         endpoint,
         data: _usuarioToJson(usuario),
       );
 
-      print('LOG_CREAR: Respuesta del servidor: ${response.statusCode}');
-
       if (response.statusCode == 201) {
-        print('LOG_CREAR: Usuario creado correctamente: ${usuario.usuario}');
-        await obtenerTodos(); // Actualizar caché
+        await obtenerTodos();
         return {'success': true, 'message': 'Usuario creado correctamente'};
       } else if (response.statusCode == 409) {
-        print('LOG_CREAR: Error 409 - El usuario ya existe');
-        // Verificar si el usuario realmente existe
         final usuarioBuscado = await buscarPorNombre(usuario.usuario);
         if (usuarioBuscado == null) {
-          print('LOG_CREAR: Conflict ignorado, usuario no existe realmente');
           await obtenerTodos();
           return {'success': true, 'message': 'Usuario creado correctamente'};
         }
         return {'success': false, 'message': 'El nombre de usuario ya existe'};
       } else {
-        print('LOG_CREAR: Error inesperado: ${response.statusCode}');
         return {
           'success': false,
           'message':
@@ -232,12 +175,8 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         };
       }
     } catch (e) {
-      print('LOG_CREAR: Excepción: $e');
-
-      // Manejar específicamente el error de conflicto (usuario ya existe)
       if (e.toString().contains('409') ||
           e.toString().contains('user_exists')) {
-        print('LOG_CREAR: Error de conflicto - Usuario ya existe');
         return {'success': false, 'message': 'El nombre de usuario ya existe'};
       }
 
@@ -255,7 +194,6 @@ class ApiUsuarioRepository implements IUsuarioRepository {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error al actualizar usuario: $e');
       return false;
     }
   }
@@ -266,7 +204,6 @@ class ApiUsuarioRepository implements IUsuarioRepository {
       final response = await _dioClient.delete('$endpoint/$id');
       return response.statusCode == 204;
     } catch (e) {
-      print('Error al eliminar usuario: $e');
       return false;
     }
   }

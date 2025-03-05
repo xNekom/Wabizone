@@ -17,15 +17,12 @@ class _GestionPedidosScreenState extends State<GestionPedidosScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar pedidos al iniciar la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PedidoProvider>(context, listen: false).obtenerTodosPedidos();
     });
   }
 
-  // Método para confirmar y eliminar un pedido
   Future<void> _confirmAndDeletePedido(Pedido pedido) async {
-    // Mostrar diálogo de confirmación
     bool? confirmado = await DialogUtils.showConfirmDialog(
       context: context,
       title: "Confirmar eliminación",
@@ -36,19 +33,15 @@ class _GestionPedidosScreenState extends State<GestionPedidosScreen> {
     if (confirmado != true) return;
 
     try {
-      // Mostrar spinner de carga
       await DialogUtils.showLoadingSpinner(context);
 
       final pedidoProvider =
           Provider.of<PedidoProvider>(context, listen: false);
 
-      // Eliminar el pedido
       bool resultado = await pedidoProvider.eliminarPedido(pedido.id);
 
-      // Cerrar el spinner
       Navigator.pop(context);
 
-      // Mostrar mensaje de éxito o error
       if (resultado) {
         DialogUtils.showSnackBar(
           context,
@@ -63,7 +56,6 @@ class _GestionPedidosScreenState extends State<GestionPedidosScreen> {
         );
       }
     } catch (e) {
-      // Cerrar spinner en caso de error
       Navigator.pop(context);
       DialogUtils.showSnackBar(
         context,
@@ -86,20 +78,16 @@ class _GestionPedidosScreenState extends State<GestionPedidosScreen> {
     if (confirmado != true) return;
 
     try {
-      // Mostrar spinner de carga
       await DialogUtils.showLoadingSpinner(context);
 
       final pedidoProvider =
           Provider.of<PedidoProvider>(context, listen: false);
 
-      // Actualizar estado del pedido
       bool resultado =
           await pedidoProvider.cambiarEstadoPedido(pedido.id, nuevoEstado);
 
-      // Cerrar el spinner
       Navigator.pop(context);
 
-      // Mostrar mensaje de éxito o error
       if (resultado) {
         DialogUtils.showSnackBar(context, "Estado actualizado a '$nuevoEstado'",
             color:
@@ -109,7 +97,6 @@ class _GestionPedidosScreenState extends State<GestionPedidosScreen> {
             color: Constants.errorColor);
       }
     } catch (e) {
-      // Cerrar spinner en caso de error
       Navigator.pop(context);
       DialogUtils.showSnackBar(context, "Error al actualizar el estado: $e",
           color: Constants.errorColor);

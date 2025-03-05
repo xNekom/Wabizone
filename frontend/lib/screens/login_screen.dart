@@ -35,16 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
         final usuarioProvider =
             Provider.of<UsuarioProvider>(context, listen: false);
 
-        print(
-            'LOGIN_SCREEN: Intentando iniciar sesión con usuario: ${_usuarioController.text}');
-
         final success = await usuarioProvider.login(
             _usuarioController.text, _contrasenaController.text);
 
         if (!mounted) return;
 
         if (success) {
-          // Transferir carrito si hay uno
           final carritoProvider =
               Provider.of<CarritoProvider>(context, listen: false);
           if (usuarioProvider.usuarioActual != null) {
@@ -52,20 +48,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 int.parse(usuarioProvider.usuarioActual!.id!));
           }
 
-          print('LOGIN_SCREEN: Inicio de sesión exitoso, redirigiendo a home');
           Navigator.pushReplacementNamed(context, '/home');
         } else {
-          // Verificar si el error es de usuario bloqueado
           final errorMsg = usuarioProvider.error.toLowerCase();
-          print('LOGIN_SCREEN: Error de inicio de sesión: $errorMsg');
 
           if (errorMsg.contains('baneado') ||
               errorMsg.contains('bloqueado') ||
               errorMsg.contains('403') ||
               errorMsg.contains('forbidden')) {
-            print(
-                'LOGIN_SCREEN: Detectado usuario bloqueado, mostrando diálogo especial');
-            // Mostrar un diálogo específico para usuarios bloqueados
             if (!mounted) return;
             showDialog(
               context: context,
@@ -93,8 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           } else {
-            // Mostrar el error normal
-            print('LOGIN_SCREEN: Mostrando error estándar en SnackBar');
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -105,7 +93,6 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         }
       } catch (e) {
-        print('LOGIN_SCREEN: Error en proceso de login: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

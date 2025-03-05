@@ -4,10 +4,8 @@ class Pedido {
   String detallesPedido;
   String estadoPedido;
   double precioTotal;
-  String? usuarioId; // Identificador del usuario que realizó el pedido
-  String? nombreUsuario; // Nombre del usuario que realizó el pedido
-
-  // Datos de envío
+  String? usuarioId;
+  String? nombreUsuario;
   String? nombreCompleto;
   String? direccion;
   String? ciudad;
@@ -16,13 +14,9 @@ class Pedido {
   String? email;
   String? comentarios;
 
-  // Getter compatible con los widgets que usan 'estado'
   String get estado => estadoPedido;
-  // Getter compatible con los widgets que usan 'total'
   double get total => precioTotal;
-  // Getter compatible con los widgets que usan 'usuario'
   String? get usuario => nombreCompleto ?? nombreUsuario ?? usuarioId;
-  // Lista vacía para compatibilidad con widgets que usan 'productos'
   List<dynamic> get productos => [];
 
   Pedido({
@@ -42,7 +36,6 @@ class Pedido {
     this.comentarios,
   });
 
-  // Getters
   String get getId => id;
   int get getNPedido => nPedido;
   String get getDetallesPedido => detallesPedido;
@@ -58,7 +51,6 @@ class Pedido {
   String? get getEmail => email;
   String? get getComentarios => comentarios;
 
-  // Setters
   set setId(String id) => this.id = id;
   set setNPedido(int nPedido) => this.nPedido = nPedido;
   set setDetallesPedido(String detallesPedido) =>
@@ -77,10 +69,8 @@ class Pedido {
   set setEmail(String? email) => this.email = email;
   set setComentarios(String? comentarios) => this.comentarios = comentarios;
 
-  // Setter compatible con los widgets que usan 'estado'
   set estado(String value) => estadoPedido = value;
 
-  // Método para convertir los datos del usuario a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -100,7 +90,6 @@ class Pedido {
     };
   }
 
-  // Factory constructor para crear una instancia desde JSON
   factory Pedido.fromJson(Map<String, dynamic> json) {
     return Pedido(
       id: json['id'].toString(),

@@ -15,7 +15,6 @@ class Producto {
     required this.precio,
   });
 
-  // Getters
   String get getId => id;
   String get getNombre => nombre;
   String get getDescripcion => descripcion;
@@ -23,7 +22,6 @@ class Producto {
   int get getStock => stock;
   double get getPrecio => precio;
 
-  // Setters
   set setId(String id) => this.id = id;
   set setNombre(String nombre) => this.nombre = nombre;
   set setDescripcion(String descripcion) => this.descripcion = descripcion;

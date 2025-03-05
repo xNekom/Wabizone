@@ -33,7 +33,6 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody UserCreationRequest userCreationRequest){
-        // Verificar si el usuario ya existe
         Optional<User> existingUser = userService.findUserByNombre(userCreationRequest.nombre());
         if (existingUser.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();

@@ -17,7 +17,6 @@ class ShoppingCart {
     required this.total,
   });
 
-  // Factory method para crear un ShoppingCart vacío
   factory ShoppingCart.empty() {
     return ShoppingCart(
       items: [],
@@ -26,7 +25,6 @@ class ShoppingCart {
     );
   }
 
-  // Factory method para crear un ShoppingCart desde JSON
   factory ShoppingCart.fromJson(Map<String, dynamic> json) {
     return ShoppingCart(
       id: json['id'],
@@ -40,7 +38,6 @@ class ShoppingCart {
     );
   }
 
-  // Método para convertir ShoppingCart a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -52,31 +49,25 @@ class ShoppingCart {
     };
   }
 
-  // Método para agregar un ítem al carrito
   ShoppingCart addItem(CartItem newItem) {
     List<CartItem> updatedItems = List.from(items);
 
-    // Verificar si el producto ya existe en el carrito
     int existingIndex = updatedItems
         .indexWhere((item) => item.productoId == newItem.productoId);
 
     if (existingIndex >= 0) {
-      // Si el producto ya existe, actualizar la cantidad
       CartItem existingItem = updatedItems[existingIndex];
       updatedItems[existingIndex] = existingItem.copyWith(
           cantidad: existingItem.cantidad + newItem.cantidad);
     } else {
-      // Si no existe, añadirlo al carrito
       updatedItems.add(newItem);
     }
 
-    // Calcular el nuevo total
     double newTotal = 0;
     for (var item in updatedItems) {
       newTotal += item.subtotal;
     }
 
-    // Retornar un nuevo ShoppingCart con los ítems actualizados
     return ShoppingCart(
       id: id,
       sessionId: sessionId,
@@ -87,18 +78,15 @@ class ShoppingCart {
     );
   }
 
-  // Método para eliminar un ítem del carrito
   ShoppingCart removeItem(int productoId) {
     List<CartItem> updatedItems =
         items.where((item) => item.productoId != productoId).toList();
 
-    // Calcular el nuevo total
     double newTotal = 0;
     for (var item in updatedItems) {
       newTotal += item.subtotal;
     }
 
-    // Retornar un nuevo ShoppingCart con los ítems actualizados
     return ShoppingCart(
       id: id,
       sessionId: sessionId,
@@ -109,7 +97,6 @@ class ShoppingCart {
     );
   }
 
-  // Método para actualizar la cantidad de un ítem
   ShoppingCart updateItemQuantity(int productoId, int cantidad) {
     List<CartItem> updatedItems = List.from(items);
 
@@ -121,13 +108,11 @@ class ShoppingCart {
       updatedItems[itemIndex] = item.copyWith(cantidad: cantidad);
     }
 
-    // Calcular el nuevo total
     double newTotal = 0;
     for (var item in updatedItems) {
       newTotal += item.subtotal;
     }
 
-    // Retornar un nuevo ShoppingCart con los ítems actualizados
     return ShoppingCart(
       id: id,
       sessionId: sessionId,
@@ -138,7 +123,6 @@ class ShoppingCart {
     );
   }
 
-  // Método para vaciar el carrito
   ShoppingCart clearCart() {
     return ShoppingCart(
       id: id,

@@ -8,8 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-
-//Modelo objeto relacionandolo con la tabla 
 @Entity
 @Table(name = "Product")
 public class Product {
@@ -38,7 +36,6 @@ public class Product {
     public Product() {
     }
 
-    //Generado en source actions solo el id de la tabla para comprobar
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

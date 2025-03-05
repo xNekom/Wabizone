@@ -31,10 +31,7 @@ class _RegistroDialogState extends State<RegistroDialog> {
   bool _isLoading = false;
 
   Future<void> _registrar() async {
-    print('Botón de Registro presionado');
-
     final isValid = _formKey.currentState!.validate();
-    print('Formulario válido: $isValid');
 
     if (isValid) {
       if (!_aceptaTerminos) {
@@ -48,16 +45,7 @@ class _RegistroDialogState extends State<RegistroDialog> {
         _isLoading = true;
       });
 
-      // Procesamos el nombre de usuario (trim y minúsculas) para evitar falsos positivos
       final usuarioNormalizado = _usuarioController.text.trim().toLowerCase();
-      print('Usuario normalizado: $usuarioNormalizado');
-
-      print('Datos para registro:');
-      print('Usuario original: ${_usuarioController.text}');
-      print('Usuario normalizado: $usuarioNormalizado');
-      print('Edad: ${_edadController.text}');
-      print('Trato: $_selectedTrato');
-      print('Lugar: $_selectedCapital');
 
       Usuario nuevoUsuario = Usuario(
         trato: _selectedTrato,
@@ -73,16 +61,12 @@ class _RegistroDialogState extends State<RegistroDialog> {
       try {
         final usuarioProvider =
             Provider.of<UsuarioProvider>(context, listen: false);
-        print('Llamando a usuarioProvider.registrar...');
         final Map<String, dynamic> result =
             await usuarioProvider.registrar(nuevoUsuario);
-
-        print('Resultado del registro: $result');
 
         if (!mounted) return;
 
         if (result['success']) {
-          // Mostrar un mensaje más descriptivo y amigable para el usuario
           await showDialog(
             context: context,
             barrierDismissible: false,
@@ -102,8 +86,7 @@ class _RegistroDialogState extends State<RegistroDialog> {
                     child: Text('Aceptar'),
                     onPressed: () {
                       Navigator.of(dialogContext).pop();
-                      Navigator.of(context)
-                          .pop(); // Cerrar el diálogo de registro
+                      Navigator.of(context).pop();
                     },
                   ),
                 ],
@@ -115,7 +98,6 @@ class _RegistroDialogState extends State<RegistroDialog> {
               color: Constants.errorColor);
         }
       } catch (e) {
-        print('Error en registro: $e');
         if (!mounted) return;
 
         DialogUtils.showSnackBar(

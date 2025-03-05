@@ -21,7 +21,6 @@ class Usuario {
     this.esAdmin = false,
   });
 
-  // Getters
   String? get getId => id;
   String get getTrato => trato;
   String get getImagen => imagen;
@@ -32,7 +31,6 @@ class Usuario {
   bool get getBloqueado => bloqueado;
   bool get getEsAdmin => esAdmin;
 
-  // Setters
   set setId(String? newId) => id = newId;
   set setTrato(String trato) => this.trato = trato;
   set setImagen(String imagen) => this.imagen = imagen;

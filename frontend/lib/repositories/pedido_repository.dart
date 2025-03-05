@@ -1,37 +1,22 @@
 import '../models/pedido.dart';
 
-/// Interfaz que define las operaciones para el repositorio de pedidos
 abstract class IPedidoRepository {
-  /// Obtiene todos los pedidos
   Future<List<Pedido>> obtenerTodos();
-
-  /// Obtiene pedidos por estado
   Future<List<Pedido>> obtenerPorEstado(String estado);
-
-  /// Obtiene un pedido por su ID
   Future<Pedido?> obtenerPorId(String id);
-
-  /// Crea un nuevo pedido
   Future<Pedido?> crear(Pedido pedido);
-
-  /// Actualiza un pedido existente
   Future<bool> actualizar(Pedido pedido, String id);
-
-  /// Elimina un pedido
   Future<bool> eliminar(String id);
 }
 
-/// Implementación del repositorio de pedidos que utiliza DIO para acceder a la API
 class ApiPedidoRepository implements IPedidoRepository {
   final String endpoint;
   final _dioClient;
 
-  // Caché local para pedidos
   List<Pedido> _pedidosCache = [];
 
   ApiPedidoRepository(this._dioClient, {this.endpoint = '/pedidos'});
 
-  // Convertir Pedido del frontend a formato JSON para el backend
   Map<String, dynamic> _pedidoToJson(Pedido pedido) {
     return {
       'nPedido': pedido.nPedido,
@@ -62,11 +47,10 @@ class ApiPedidoRepository implements IPedidoRepository {
             .toList();
         return _pedidosCache;
       } else {
-        return _pedidosCache; // Retorna la caché si hay error
+        return _pedidosCache;
       }
     } catch (e) {
-      print('Error al obtener pedidos: $e');
-      return _pedidosCache; // Retorna la caché si hay excepción
+      return _pedidosCache;
     }
   }
 
@@ -87,7 +71,6 @@ class ApiPedidoRepository implements IPedidoRepository {
         return [];
       }
     } catch (e) {
-      print('Error al obtener pedidos por estado: $e');
       return [];
     }
   }
@@ -104,7 +87,6 @@ class ApiPedidoRepository implements IPedidoRepository {
         return null;
       }
     } catch (e) {
-      print('Error al obtener pedido por ID: $e');
       return null;
     }
   }
@@ -124,7 +106,6 @@ class ApiPedidoRepository implements IPedidoRepository {
         return null;
       }
     } catch (e) {
-      print('Error al crear pedido: $e');
       return null;
     }
   }
@@ -139,7 +120,6 @@ class ApiPedidoRepository implements IPedidoRepository {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error al actualizar pedido: $e');
       return false;
     }
   }
@@ -150,7 +130,6 @@ class ApiPedidoRepository implements IPedidoRepository {
       final response = await _dioClient.delete('$endpoint/$id');
       return response.statusCode == 204;
     } catch (e) {
-      print('Error al eliminar pedido: $e');
       return false;
     }
   }

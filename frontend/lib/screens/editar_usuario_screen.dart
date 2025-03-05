@@ -36,7 +36,6 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
 
   void _guardarCambios() {
     if (_formKey.currentState!.validate()) {
-      // Crear una copia del usuario para actualizarlo
       final usuarioActualizado = Usuario(
         id: widget.usuario.id,
         trato: widget.usuario.trato,
@@ -49,23 +48,18 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
         esAdmin: widget.usuario.esAdmin,
       );
 
-      // Actualizar en el provider
       final usuarioProvider =
           Provider.of<UsuarioProvider>(context, listen: false);
 
-      // Obtener el ID como entero
       int userId = 0;
       try {
         userId = int.parse(widget.usuario.id ?? "0");
       } catch (e) {
-        print('Error al parsear ID de usuario: $e');
-        // Intentar extraer números del nombre de usuario como fallback
         String numericString =
             widget.usuario.usuario.replaceAll(RegExp(r'[^0-9]'), '');
         userId = numericString.isEmpty ? 0 : int.parse(numericString);
       }
 
-      print('Guardando cambios para usuario con ID: $userId');
       usuarioProvider
           .actualizarUsuario(usuarioActualizado, userId)
           .then((success) {

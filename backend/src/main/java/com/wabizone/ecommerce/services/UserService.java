@@ -1,6 +1,5 @@
 package com.wabizone.ecommerce.services;
 
-
 import java.util.List;
 import java.util.Optional;
 
@@ -10,22 +9,20 @@ import com.wabizone.ecommerce.api.request.UserCreationRequest;
 import com.wabizone.ecommerce.models.User;
 import com.wabizone.ecommerce.repository.UserRepository;
 
-
-//Plantear aqui toda la logica de negocio ademas del crud llamar a todos los metodos que haran cosas adicionales cuando se haga algo del CRUD, o no
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
 
-    public UserService (UserRepository userRepository){
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public User createUser (UserCreationRequest userCreationRequest){
+    public User createUser(UserCreationRequest userCreationRequest) {
         return userRepository.save(mapToUser(userCreationRequest));
     }
 
-    private User mapToUser (UserCreationRequest createRequest){
+    private User mapToUser(UserCreationRequest createRequest) {
         User user = new User();
         user.setNombre(createRequest.nombre());
         user.setContrasena(createRequest.contrasena());
@@ -38,15 +35,15 @@ public class UserService {
         return user;
     }
 
-    public void removeUser (Long id){
+    public void removeUser(Long id) {
         userRepository.deleteById(id);
     }
 
-    public Optional<User> getUser (final long id){
+    public Optional<User> getUser(final long id) {
         return userRepository.findById(id);
     }
 
-    public List<User> getAllUsers(){
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
     

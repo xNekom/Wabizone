@@ -13,14 +13,13 @@ import '../providers/producto_provider.dart';
 import '../utils/image_utils.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({Key? key}) : super(key: key);
+  const CheckoutScreen({super.key});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  // Controladores para los campos del formulario
   final _nombreController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
@@ -28,15 +27,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _ciudadController = TextEditingController();
   final _codigoPostalController = TextEditingController();
 
-  // Estado para controlar la forma de pago seleccionada
   String _metodoPago = 'tarjeta';
-
-  // Estado para indicar si se está procesando el pago
   bool _procesandoPago = false;
 
   @override
   void dispose() {
-    // Liberar recursos de los controladores
     _nombreController.dispose();
     _emailController.dispose();
     _telefonoController.dispose();
@@ -49,7 +44,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final carritoProvider = Provider.of<CarritoProvider>(context);
-    // Asegurarse de que los productos estén cargados
     final productoProvider =
         Provider.of<ProductoProvider>(context, listen: false);
     if (productoProvider.productos.isEmpty) {
@@ -71,22 +65,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Resumen del carrito
                       _buildCartSummary(carritoProvider.cart),
-
                       const Divider(height: 32),
-
-                      // Información de envío
                       _buildShippingForm(),
-
                       const Divider(height: 32),
-
-                      // Métodos de pago
                       _buildPaymentMethods(),
-
                       const SizedBox(height: 24),
-
-                      // Botón de finalizar compra
                       ElevatedButton(
                         onPressed: _procesandoPago
                             ? null
@@ -108,7 +92,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Widget para mostrar el resumen del carrito
   Widget _buildCartSummary(ShoppingCart cart) {
     return Card(
       elevation: 2,
@@ -125,13 +108,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Lista de productos
             ...cart.items.map((item) => _buildCartItem(item)),
-
             const Divider(height: 24),
-
-            // Totales
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -167,9 +145,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Widget para mostrar cada ítem del carrito
   Widget _buildCartItem(CartItem item) {
-    // Buscar la imagen del producto usando el provider de productos
     String imagenUrl = '';
     final productoProvider =
         Provider.of<ProductoProvider>(context, listen: false);
@@ -188,7 +164,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           break;
         }
       } catch (e) {
-        // Ignorar errores de conversión
         continue;
       }
     }
@@ -198,7 +173,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Imagen del producto
           if (imagenUrl.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -240,7 +214,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Widget para el formulario de información de envío
   Widget _buildShippingForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +288,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Widget para los métodos de pago
   Widget _buildPaymentMethods() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,9 +352,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Método para procesar el pago
   Future<void> _procesarPago(BuildContext context) async {
-    // Validar formulario
     if (_nombreController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _direccionController.text.isEmpty ||
@@ -401,7 +371,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _procesandoPago = true;
     });
 
-    // Obtener los proveedores
     final carritoProvider =
         Provider.of<CarritoProvider>(context, listen: false);
     final pedidoProvider = Provider.of<PedidoProvider>(context, listen: false);
@@ -411,7 +380,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Provider.of<ProductoProvider>(context, listen: false);
 
     try {
-      // Crear el pedido con los datos del carrito
       final direccionCompleta =
           '${_direccionController.text}, ${_ciudadController.text}, ${_codigoPostalController.text}';
       final metodoPagoTexto = _metodoPago == 'tarjeta'
@@ -425,10 +393,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return '- ${item.nombre}: ${item.cantidad} x ${item.precio} = ${item.subtotal} €';
       }).join('\n')}';
 
-      // Crear el objeto Pedido (con ID temporal que será reemplazado por el backend)
       final nuevoPedido = Pedido(
-        id: 'temp', // Será asignado por el backend
-        nPedido: 0, // Será asignado por el backend
+        id: 'temp',
+        nPedido: 0,
         detallesPedido: detallesPedido,
         estadoPedido: 'Pendiente',
         precioTotal: carritoProvider.cart.total,
@@ -443,20 +410,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         comentarios: '',
       );
 
-      // Crear el pedido en el backend
       final pedidoCreado = await pedidoProvider.crearPedido(nuevoPedido);
 
       if (pedidoCreado == null) {
         throw Exception('No se pudo crear el pedido');
       }
 
-      // Actualizar el stock de productos
       List<Future<bool>> actualizacionesStock = [];
 
       for (var item in carritoProvider.cart.items) {
-        // Buscar el producto por ID
         int productoId = item.productoId;
-        String productoIdString = "";
 
         for (var producto in productoProvider.productos) {
           try {
@@ -468,11 +431,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             }
 
             if (idNum == productoId) {
-              // Reducir el stock
               int nuevoStock = producto.stock - item.cantidad;
               if (nuevoStock < 0) nuevoStock = 0;
 
-              // Crear copia del producto con stock actualizado
               final productoActualizado = Producto(
                 id: producto.id,
                 nombre: producto.nombre,
@@ -482,23 +443,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 imagen: producto.imagen,
               );
 
-              // Actualizar el producto en la base de datos
               actualizacionesStock.add(productoProvider.actualizarProducto(
                   productoActualizado, idNum));
 
               break;
             }
           } catch (e) {
-            print('Error al procesar ID de producto: $e');
             continue;
           }
         }
       }
 
-      // Esperar a que todas las actualizaciones de stock terminen
       await Future.wait(actualizacionesStock);
-
-      // Limpiar el carrito después de completar la compra
       await carritoProvider.clearCart();
 
       setState(() {
@@ -507,7 +463,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (!mounted) return;
 
-      // Mostrar diálogo de éxito
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -530,10 +485,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cerrar el diálogo
-
-                // En lugar de volver a la pantalla anterior directamente,
-                // volvemos al HomeScreen con el índice del carrito
+                Navigator.of(context).pop();
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
               child: const Text('Aceptar'),
@@ -548,7 +500,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (!mounted) return;
 
-      // Mostrar error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al procesar el pedido: $e'),
