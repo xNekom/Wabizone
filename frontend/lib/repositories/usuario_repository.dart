@@ -66,6 +66,7 @@ class ApiUsuarioRepository implements IUsuarioRepository {
   @override
   Future<String?> validarCredenciales(String usuario, String contrasena) async {
     try {
+      print('LOG_LOGIN: Validando credenciales para usuario: $usuario');
       final response = await _dioClient.post(
         '$endpoint/login',
         queryParameters: {
@@ -74,15 +75,44 @@ class ApiUsuarioRepository implements IUsuarioRepository {
         },
       );
 
+      print('LOG_LOGIN: Código de respuesta recibido: ${response.statusCode}');
+
       if (response.statusCode == 200) {
+        print('LOG_LOGIN: Autenticación exitosa');
         return null; // Autenticación exitosa
       } else if (response.statusCode == 403) {
-        return "Has sido baneado, por favor contacta con el administrador";
+        print('LOG_LOGIN: Código 403 - Usuario bloqueado');
+        return "Has sido baneado, por favor contacta con un administrador";
+      } else if (response.statusCode == 401) {
+        print('LOG_LOGIN: Código 401 - Credenciales incorrectas');
+        return "Contraseña incorrecta. Por favor, verifica tus credenciales.";
       } else {
-        return "Credenciales incorrectas";
+        print('LOG_LOGIN: Código inesperado: ${response.statusCode}');
+        return "Error de autenticación. Credenciales incorrectas.";
       }
     } catch (e) {
-      return "Error de conexión: $e";
+      print('LOG_LOGIN: Excepción capturada: $e');
+      String errorMsg = e.toString().toLowerCase();
+
+      if (errorMsg.contains('403') ||
+          errorMsg.contains('forbidden') ||
+          errorMsg.contains('bloqueado') ||
+          errorMsg.contains('baneado') ||
+          errorMsg.contains('usuario_bloqueado')) {
+        print(
+            'LOG_LOGIN: Manejando 403 - Usuario bloqueado o sin permisos: $endpoint/login');
+        return "Has sido baneado, por favor contacta con un administrador";
+      } else if (errorMsg.contains('404') || errorMsg.contains('not_found')) {
+        print('LOG_LOGIN: Manejando 404 - Usuario no encontrado');
+        return "El usuario no existe. Por favor, verifica tu nombre de usuario.";
+      } else if (errorMsg.contains('401') ||
+          errorMsg.contains('unauthorized')) {
+        print('LOG_LOGIN: Manejando 401 - Credenciales incorrectas');
+        return "Contraseña incorrecta. Por favor, verifica tus credenciales.";
+      }
+
+      print('LOG_LOGIN: Error general de conexión');
+      return "Error de conexión con el servidor: ${e.toString().replaceAll('Exception: ', '')}";
     }
   }
 

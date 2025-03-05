@@ -23,15 +23,15 @@ class ProductoCard extends StatelessWidget {
         leading: SizedBox(
           width: 50,
           height: 50,
-          child: producto.imagen.isEmpty
-              ? const Icon(Icons.image_not_supported, size: 40)
-              : Image(
-                  image: ImageUtils.getImageProvider(producto.imagen),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.broken_image, size: 40);
-                  },
-                ),
+          child: Image(
+            image: _buildProductImage(producto),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print(
+                  'Error cargando imagen para producto ${producto.id}: $error');
+              return const Icon(Icons.broken_image, size: 40);
+            },
+          ),
         ),
         title: Text(producto.nombre),
         subtitle: Column(
@@ -58,5 +58,13 @@ class ProductoCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  ImageProvider _buildProductImage(Producto producto) {
+    // Información de depuración
+    ImageUtils.debugImage(producto.imagen, 'ProductoCard-Admin');
+
+    // Intentar cargar la imagen del producto
+    return ImageUtils.getImageProvider(producto.imagen);
   }
 }

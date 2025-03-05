@@ -33,6 +33,7 @@ class CarritoProvider extends ChangeNotifier {
   // Inicializar carrito
   Future<void> _initCart() async {
     _setLoading(true);
+    _error = null; // Limpiar errores al inicio
 
     try {
       // Intentar cargar el sessionId guardado
@@ -40,22 +41,42 @@ class CarritoProvider extends ChangeNotifier {
       _sessionId = prefs.getString('cart_session_id');
       _userId = prefs.getInt('user_id');
 
-      if (_userId != null) {
-        // Si hay un usuario logueado, cargar su carrito
-        await _loadUserCart(_userId!);
-      } else if (_sessionId != null) {
-        // Si hay un sessionId guardado, cargar el carrito por sessionId
-        await _loadSessionCart(_sessionId!);
-      } else {
+      print('Inicializando carrito: sessionId=$_sessionId, userId=$_userId');
+
+      // Si no hay sessionId o userId, creamos un carrito vacío en memoria
+      if (_sessionId == null && _userId == null) {
         // Si no hay sessionId, crear uno nuevo
         _sessionId = const Uuid().v4();
         await prefs.setString('cart_session_id', _sessionId!);
+        print('Nuevo sessionId generado: $_sessionId');
 
-        // Crear un nuevo carrito en el servidor
-        await _loadSessionCart(_sessionId!);
+        // Crear un nuevo carrito vacío en memoria sin intentar acceder al servidor
+        _cart = ShoppingCart.empty();
+        notifyListeners();
+        _setLoading(false);
+        return;
+      }
+
+      // Intentamos cargar el carrito, pero manejamos los errores silenciosamente
+      try {
+        if (_userId != null) {
+          // Si hay un usuario logueado, cargar su carrito
+          await _loadUserCart(_userId!);
+        } else if (_sessionId != null) {
+          // Si hay un sessionId guardado, cargar el carrito por sessionId
+          await _loadSessionCart(_sessionId!);
+        }
+      } catch (innerError) {
+        print('Error al cargar el carrito: $innerError');
+        // Si hay un error al cargar, simplemente usamos un carrito vacío
+        _cart = ShoppingCart.empty();
+        notifyListeners();
       }
     } catch (e) {
-      _setError('Error al inicializar el carrito: $e');
+      print('Error controlado al inicializar el carrito: $e');
+      // No mostrar error al usuario, en su lugar usar un carrito vacío
+      _cart = ShoppingCart.empty();
+      notifyListeners();
     } finally {
       _setLoading(false);
     }
@@ -64,36 +85,59 @@ class CarritoProvider extends ChangeNotifier {
   // Cargar carrito por ID de sesión
   Future<void> _loadSessionCart(String sessionId) async {
     try {
+      print('Intentando cargar carrito por sessionId: $sessionId');
       _cart = await _carritoService.getCartBySessionId(sessionId);
+      print('Carrito cargado exitosamente por sessionId');
       notifyListeners();
     } catch (e) {
-      // Si el error es 404, no es realmente un error, simplemente significa
-      // que necesitamos crear un nuevo carrito
-      if (e.toString().contains('404')) {
-        // Simplemente usamos un carrito vacío local hasta que se agregue un elemento
-        _cart = ShoppingCart.empty();
-        notifyListeners();
-      } else {
-        _setError('Error al cargar el carrito: $e');
-      }
+      print('Error controlado al cargar carrito por sessionId: $e');
+      // Para cualquier error, simplemente usamos un carrito vacío local
+      print('Creando carrito vacío para la sesión');
+      _cart = ShoppingCart(
+        sessionId: sessionId,
+        items: [],
+        ultimaActualizacion: DateTime.now(),
+        total: 0.0,
+      );
+
+      // No mostramos error al usuario
+      // _setError('Error al cargar el carrito: $e');
+
+      // Intentamos crear un carrito en el servidor silenciosamente
+      _tryCreateNewCart();
+
+      notifyListeners();
     }
   }
 
   // Cargar carrito por ID de usuario
   Future<void> _loadUserCart(int userId) async {
     try {
+      print('Intentando cargar carrito para usuario $userId');
       _cart = await _carritoService.getCartByUserId(userId);
+      print('Carrito cargado exitosamente para usuario $userId');
       notifyListeners();
     } catch (e) {
-      // Si el error es 404, no es realmente un error, simplemente significa
-      // que necesitamos crear un nuevo carrito
-      if (e.toString().contains('404')) {
-        // Simplemente usamos un carrito vacío local hasta que se agregue un elemento
-        _cart = ShoppingCart.empty();
-        notifyListeners();
-      } else {
-        _setError('Error al cargar el carrito del usuario: $e');
-      }
+      print('Error controlado al cargar carrito: $e');
+      // Para cualquier error al cargar el carrito del usuario, simplemente creamos uno vacío
+      // No distinguimos entre tipos de error, ya que el resultado es el mismo
+      print('Creando carrito vacío para el usuario $userId');
+
+      // Crear un nuevo carrito vacío con el ID de usuario
+      _cart = ShoppingCart(
+        usuarioId: userId,
+        items: [],
+        ultimaActualizacion: DateTime.now(),
+        total: 0.0,
+      );
+
+      // No mostramos el error al usuario
+      // _setError(null);
+
+      // Intentamos crear un carrito en el servidor silenciosamente
+      _tryCreateNewCart();
+
+      notifyListeners();
     }
   }
 

@@ -36,6 +36,11 @@ dependencies:
   provider: ^6.1.1  # Para gestión de estado
   shared_preferences: ^2.2.2  # Almacenamiento local
   uuid: ^4.3.2  # Generador de IDs únicos
+  intl: ^0.18.1
+  path: ^1.8.3
+  image_compression: ^1.0.4
+  image: ^4.1.3
+  url_launcher: ^6.2.5  # Para abrir URLs, emails, teléfonos y mapas
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -71,6 +76,8 @@ flutter:
     - assets/imagenes/prod1.png
     - assets/imagenes/prod2.png
     - assets/imagenes/prod3.png
+    - assets/imagenes/prod4.png
+    - assets/imagenes/producto_default.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

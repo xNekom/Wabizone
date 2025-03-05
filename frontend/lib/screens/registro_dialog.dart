@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/usuario.dart';
 import '../providers/usuario_provider.dart';
+import '../utils/constants_utils.dart';
 import '../utils/dialog_utils.dart';
 import '../utils/image_utils.dart';
-import '../utils/constants_utils.dart';
 import '../utils/button_styles.dart';
 import '../widgets/registro_form.dart';
 
@@ -24,6 +24,8 @@ class _RegistroDialogState extends State<RegistroDialog> {
   final TextEditingController _contrasenaController = TextEditingController();
   final TextEditingController _repiteContrasenaController =
       TextEditingController();
+  final TextEditingController _nombreController = TextEditingController();
+  final TextEditingController _apellidosController = TextEditingController();
   String? _selectedCapital = "A Coruña";
   bool _aceptaTerminos = false;
   bool _isLoading = false;
@@ -80,9 +82,34 @@ class _RegistroDialogState extends State<RegistroDialog> {
         if (!mounted) return;
 
         if (result['success']) {
-          DialogUtils.showSnackBar(context, result['message'],
-              color: Constants.successColor);
-          Navigator.pop(context);
+          // Mostrar un mensaje más descriptivo y amigable para el usuario
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext dialogContext) {
+              return AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Constants.successColor),
+                    SizedBox(width: 10),
+                    Text('¡Registro exitoso!')
+                  ],
+                ),
+                content: Text(
+                    'Usuario registrado correctamente. Ya puedes iniciar sesión.'),
+                actions: [
+                  TextButton(
+                    child: Text('Aceptar'),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(context)
+                          .pop(); // Cerrar el diálogo de registro
+                    },
+                  ),
+                ],
+              );
+            },
+          );
         } else {
           DialogUtils.showSnackBar(context, result['message'],
               color: Constants.errorColor);
@@ -110,6 +137,8 @@ class _RegistroDialogState extends State<RegistroDialog> {
     _usuarioController.dispose();
     _contrasenaController.dispose();
     _repiteContrasenaController.dispose();
+    _nombreController.dispose();
+    _apellidosController.dispose();
     super.dispose();
   }
 
@@ -148,6 +177,8 @@ class _RegistroDialogState extends State<RegistroDialog> {
                 onTerminosChanged: (value) =>
                     setState(() => _aceptaTerminos = value ?? false),
                 capitales: Constants.capitales,
+                nombreController: _nombreController,
+                apellidosController: _apellidosController,
               ),
       ),
       actions: [

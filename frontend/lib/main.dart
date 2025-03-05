@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/checkout_screen.dart';
+import 'screens/admin_home_screen.dart';
+import 'screens/home_screen.dart';
 
 // Utils
 import 'utils/constants_utils.dart';
@@ -70,6 +72,21 @@ class MyApp extends StatelessWidget {
           '/': (context) => const LoginScreen(),
           '/cart': (context) => const CartScreen(),
           '/checkout': (context) => const CheckoutScreen(),
+          '/home': (context) {
+            // Verificar si hay un usuario logueado
+            final usuarioProvider =
+                Provider.of<UsuarioProvider>(context, listen: false);
+            if (usuarioProvider.usuarioActual != null) {
+              if (usuarioProvider.isAdmin) {
+                return AdminHomeScreen(usuario: usuarioProvider.usuarioActual!);
+              } else {
+                return HomeScreen(usuario: usuarioProvider.usuarioActual!);
+              }
+            } else {
+              // Si no hay usuario, redirigir al login
+              return const LoginScreen();
+            }
+          },
         },
       ),
     );

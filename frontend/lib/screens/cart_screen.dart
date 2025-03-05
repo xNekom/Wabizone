@@ -149,12 +149,28 @@ class CartPage extends StatelessWidget {
         if (idNum == item.productoId) {
           productoCompleto = producto;
           imagenUrl = producto.imagen;
+          print(
+              'Producto encontrado en carrito: ${producto.nombre} con ID ${producto.id}');
           break;
         }
       } catch (e) {
         // Ignorar errores de conversión
         continue;
       }
+    }
+
+    // Si no encontramos el producto, crear un producto temporal para mostrar
+    if (productoCompleto == null) {
+      productoCompleto = Producto(
+        id: 'p${item.productoId}',
+        nombre: item.nombre,
+        descripcion: 'Producto en carrito',
+        imagen: 'prod${item.productoId}.png',
+        stock: 0,
+        precio: item.precio,
+      );
+      print(
+          'Creando producto temporal para el carrito: ID p${item.productoId}');
     }
 
     return Card(
@@ -170,7 +186,7 @@ class CartPage extends StatelessWidget {
               child: SizedBox(
                 width: 80,
                 height: 80,
-                child: _buildProductImage(imagenUrl),
+                child: _buildCartItemImage(item.productoId, productoCompleto),
               ),
             ),
             const SizedBox(width: 16),
@@ -247,25 +263,54 @@ class CartPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProductImage(String? imagenUrl) {
-    if (imagenUrl == null || imagenUrl.isEmpty) {
-      return Container(
-        color: Colors.grey.shade300,
-        child: const Icon(Icons.image, color: Colors.grey),
+  Widget _buildCartItemImage(int productoId, Producto? producto) {
+    // Si tenemos un producto completo, usar su imagen
+    if (producto != null) {
+      return Image(
+        image: _getCartProductImage(producto),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print(
+              'Error cargando imagen para producto $productoId en carrito: $error');
+          return Container(
+            color: Colors.grey[300],
+            child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+          );
+        },
       );
     }
 
-    return Image(
-      image: ImageUtils.getImageProvider(imagenUrl),
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        print('Error al cargar la imagen: $error');
-        return Container(
-          color: Colors.grey.shade300,
-          child: const Icon(Icons.broken_image, color: Colors.grey),
-        );
-      },
+    // Si no tenemos producto, mostrar icono de imagen rota
+    return Container(
+      color: Colors.grey[300],
+      child: const Icon(Icons.inventory_2, size: 40, color: Colors.grey),
     );
+  }
+
+  ImageProvider _getCartProductImage(Producto producto) {
+    print(
+        'Intentando cargar imagen para ${producto.nombre} (ID: ${producto.id})');
+
+    // Para productos específicos que sabemos que tienen problemas
+    if (producto.id == 'p1' || producto.nombre.contains('Producto 1')) {
+      print('CartScreen: Usando imagen específica para Producto 1');
+      return const AssetImage('assets/imagenes/prod1.png');
+    }
+
+    if (producto.id == 'p4' || producto.nombre.contains('Producto 4')) {
+      print('CartScreen: Usando imagen específica para Producto 4');
+      return const AssetImage('assets/imagenes/prod4.png');
+    }
+
+    // Para cualquier otro producto con ID numérico
+    if (producto.id.startsWith('p')) {
+      final idNum = producto.id.substring(1);
+      print('CartScreen: Intentando cargar imagen por ID: prod$idNum.png');
+      return AssetImage('assets/imagenes/prod$idNum.png');
+    }
+
+    // Para otros casos, usar el ImageUtils
+    return ImageUtils.getImageProvider(producto.imagen);
   }
 
   Widget _buildCartSummary(

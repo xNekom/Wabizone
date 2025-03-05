@@ -20,7 +20,7 @@ public class Pedido {
     @Column(name = "n_pedido")
     private Long nPedido;
 
-    @Column(name = "detalles_pedido")
+    @Column(name = "detalles_pedido", columnDefinition = "LONGTEXT")
     private String detallesPedido;
 
     @Column(name = "estado_pedido")
@@ -28,6 +28,33 @@ public class Pedido {
     
     @Column(name = "precio_total")
     private double precioTotal;
+
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    @Column(name = "nombre_usuario")
+    private String nombreUsuario;
+
+    @Column(name = "nombre_completo")
+    private String nombreCompleto;
+
+    @Column(name = "direccion")
+    private String direccion;
+
+    @Column(name = "ciudad")
+    private String ciudad;
+
+    @Column(name = "codigo_postal")
+    private String codigoPostal;
+
+    @Column(name = "telefono")
+    private String telefono;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "comentarios")
+    private String comentarios;
 
     public Pedido() {
     }
@@ -86,5 +113,79 @@ public class Pedido {
 
     public void setPrecioTotal(double precioTotal) {
         this.precioTotal = precioTotal;
+    }
+
+    // Getters y setters para campos de usuario
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
+    }
+
+    public String getNombreUsuario() {
+        return nombreUsuario;
+    }
+
+    public void setNombreUsuario(String nombreUsuario) {
+        this.nombreUsuario = nombreUsuario;
+    }
+
+    // Getters y setters para campos de envío
+    public String getNombreCompleto() {
+        return nombreCompleto;
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
+
+    public String getCiudad() {
+        return ciudad;
+    }
+
+    public void setCiudad(String ciudad) {
+        this.ciudad = ciudad;
+    }
+
+    public String getCodigoPostal() {
+        return codigoPostal;
+    }
+
+    public void setCodigoPostal(String codigoPostal) {
+        this.codigoPostal = codigoPostal;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(String comentarios) {
+        this.comentarios = comentarios;
     }
 }

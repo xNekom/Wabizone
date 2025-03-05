@@ -93,7 +93,21 @@ class ProductoProvider with ChangeNotifier {
       _setLoading(false);
       return result;
     } catch (e) {
-      _setError('Error al crear producto: $e');
+      String errorMsg = e.toString();
+
+      // Detectar tipos específicos de errores
+      if (errorMsg.contains('Data truncation') ||
+          errorMsg.contains('too long for column')) {
+        _setError(
+            'La imagen seleccionada es demasiado grande para la base de datos. Por favor, selecciona una imagen más pequeña o utiliza la imagen predeterminada.');
+      } else if (errorMsg.contains('constraint') ||
+          errorMsg.contains('duplicate')) {
+        _setError(
+            'Ya existe un producto con el mismo ID. Intente crear el producto nuevamente.');
+      } else {
+        _setError('Error al crear producto: $e');
+      }
+
       _setLoading(false);
       return false;
     }
@@ -122,7 +136,18 @@ class ProductoProvider with ChangeNotifier {
       _setLoading(false);
       return result;
     } catch (e) {
-      _setError('Error al actualizar producto: $e');
+      String errorMsg = e.toString();
+
+      // Detectar tipos específicos de errores
+      if (errorMsg.contains('producto_no_encontrado')) {
+        _setError(
+            'No se encontró el producto con ID $id. Verifique que el producto existe.');
+      } else if (errorMsg.contains('resource_not_found')) {
+        _setError('Recurso no encontrado. Verifique que el producto existe.');
+      } else {
+        _setError('Error al actualizar producto: $e');
+      }
+
       _setLoading(false);
       return false;
     }

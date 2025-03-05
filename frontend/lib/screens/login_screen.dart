@@ -10,6 +10,7 @@ import 'home_screen.dart';
 import 'admin_home_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/usuario_provider.dart';
+import '../providers/carrito_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,47 +27,98 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      final usuarioProvider =
-          Provider.of<UsuarioProvider>(context, listen: false);
-
       setState(() {
         _isLoading = true;
       });
 
-      final success = await usuarioProvider.login(
-        _usuarioController.text.trim(),
-        _contrasenaController.text.trim(),
-      );
+      try {
+        final usuarioProvider =
+            Provider.of<UsuarioProvider>(context, listen: false);
 
-      setState(() {
-        _isLoading = false;
-      });
+        print(
+            'LOGIN_SCREEN: Intentando iniciar sesión con usuario: ${_usuarioController.text}');
 
-      if (!mounted) return;
+        final success = await usuarioProvider.login(
+            _usuarioController.text, _contrasenaController.text);
 
-      if (success) {
-        final usuario = usuarioProvider.usuarioActual;
+        if (!mounted) return;
 
-        if (usuario!.esAdmin) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => AdminHomeScreen(usuario: usuario)),
-          );
+        if (success) {
+          // Transferir carrito si hay uno
+          final carritoProvider =
+              Provider.of<CarritoProvider>(context, listen: false);
+          if (usuarioProvider.usuarioActual != null) {
+            await carritoProvider.transferCartToUser(
+                int.parse(usuarioProvider.usuarioActual!.id!));
+          }
+
+          print('LOGIN_SCREEN: Inicio de sesión exitoso, redirigiendo a home');
+          Navigator.pushReplacementNamed(context, '/home');
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => HomeScreen(usuario: usuario)),
-          );
+          // Verificar si el error es de usuario bloqueado
+          final errorMsg = usuarioProvider.error.toLowerCase();
+          print('LOGIN_SCREEN: Error de inicio de sesión: $errorMsg');
+
+          if (errorMsg.contains('baneado') ||
+              errorMsg.contains('bloqueado') ||
+              errorMsg.contains('403') ||
+              errorMsg.contains('forbidden')) {
+            print(
+                'LOGIN_SCREEN: Detectado usuario bloqueado, mostrando diálogo especial');
+            // Mostrar un diálogo específico para usuarios bloqueados
+            if (!mounted) return;
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.block, color: Colors.red),
+                    SizedBox(width: 10),
+                    Text('Cuenta bloqueada'),
+                  ],
+                ),
+                content: Text(
+                  'Has sido baneado, por favor contacta con un administrador',
+                  style: TextStyle(fontSize: 16),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text('Aceptar'),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Mostrar el error normal
+            print('LOGIN_SCREEN: Mostrando error estándar en SnackBar');
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(usuarioProvider.error),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
-      } else {
+      } catch (e) {
+        print('LOGIN_SCREEN: Error en proceso de login: $e');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(usuarioProvider.error),
+            content: Text('Error de conexión: $e'),
             backgroundColor: Colors.red,
           ),
         );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }

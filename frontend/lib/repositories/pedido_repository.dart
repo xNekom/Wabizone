@@ -38,6 +38,15 @@ class ApiPedidoRepository implements IPedidoRepository {
       'detallesPedido': pedido.detallesPedido,
       'estadoPedido': pedido.estadoPedido,
       'precioTotal': pedido.precioTotal,
+      'usuarioId': pedido.usuarioId,
+      'nombreUsuario': pedido.nombreUsuario,
+      'nombreCompleto': pedido.nombreCompleto,
+      'direccion': pedido.direccion,
+      'ciudad': pedido.ciudad,
+      'codigoPostal': pedido.codigoPostal,
+      'telefono': pedido.telefono,
+      'email': pedido.email,
+      'comentarios': pedido.comentarios,
     };
   }
 

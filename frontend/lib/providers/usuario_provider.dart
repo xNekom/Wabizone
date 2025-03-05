@@ -37,7 +37,15 @@ class UsuarioProvider with ChangeNotifier {
           await _usuarioRepository.validarCredenciales(usuario, contrasena);
 
       if (errorMsg != null) {
-        _setError(errorMsg);
+        // Si el mensaje contiene la palabra "baneado", significa que es un usuario bloqueado
+        if (errorMsg.toLowerCase().contains('baneado') ||
+            errorMsg.toLowerCase().contains('bloqueado') ||
+            errorMsg.toLowerCase().contains('403')) {
+          _setError(
+              'Has sido baneado, por favor contacta con un administrador');
+        } else {
+          _setError(errorMsg);
+        }
         _setLoading(false);
         return false;
       }
@@ -51,12 +59,34 @@ class UsuarioProvider with ChangeNotifier {
         return false;
       }
 
+      // Verificar explícitamente si el usuario está bloqueado
+      if (user.bloqueado) {
+        _setError('Has sido baneado, por favor contacta con un administrador');
+        _setLoading(false);
+        return false;
+      }
+
       _usuarioActual = user;
       _setLoading(false);
       notifyListeners();
       return true;
     } catch (e) {
-      _setError('Error de conexión: $e');
+      // Detectar excepciones específicas relacionadas con usuario bloqueado
+      String errorMsg = e.toString().toLowerCase();
+      if (errorMsg.contains('usuario_bloqueado') ||
+          errorMsg.contains('bloqueado') ||
+          errorMsg.contains('baneado') ||
+          errorMsg.contains('403') ||
+          errorMsg.contains('forbidden')) {
+        _setError('Has sido baneado, por favor contacta con un administrador');
+      } else if (errorMsg.contains('401') ||
+          errorMsg.contains('unauthorized') ||
+          errorMsg.contains('credenciales')) {
+        _setError(
+            'Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.');
+      } else {
+        _setError('Error de conexión: $e');
+      }
       _setLoading(false);
       return false;
     }

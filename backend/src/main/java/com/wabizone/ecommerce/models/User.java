@@ -32,7 +32,7 @@ public class User {
     @Column(name = "trato")
     private String trato;
     
-    @Column(name = "imagen")
+    @Column(name = "imagen", columnDefinition = "MEDIUMBLOB")
     private String imagen;
     
     @Column(name = "lugar_nacimiento")

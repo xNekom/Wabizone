@@ -78,4 +78,22 @@ public class ProductController {
             return ResponseEntity.notFound().build();
         }
     }
+    
+    @PutMapping("/custom/{customId}")
+    public ResponseEntity<Product> updateProductByCustomId(@PathVariable String customId, @RequestBody ProductCreationRequest productUpdateRequest) {
+        try {
+            // Primero buscamos el producto por su customId
+            Optional<Product> existingProduct = productService.findProductByCustomId(customId);
+            
+            if (existingProduct.isPresent()) {
+                // Si existe, actualizamos usando su ID numérico
+                Product updatedProduct = productService.updateProduct(existingProduct.get().getId(), productUpdateRequest);
+                return ResponseEntity.ok(updatedProduct);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

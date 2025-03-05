@@ -115,25 +115,80 @@ class _UsuarioFormState extends State<UsuarioForm> {
         const SizedBox(height: 10),
         Row(
           children: [
+            if (widget.imagenPath != null)
+              Container(
+                width: 60,
+                height: 60,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: ImageUtils.getImageProvider(widget.imagenPath),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             Expanded(
-              child: Text(
-                widget.imagenPath ?? "No se ha seleccionado imagen",
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Imagen de perfil:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.imagenPath != null
+                        ? widget.imagenPath!.length > 30
+                            ? "Imagen seleccionada"
+                            : widget.imagenPath!
+                        : "No se ha seleccionado imagen",
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
             IconButton(
               onPressed: () async {
+                // Mostrar mensaje informativo sobre el redimensionamiento automático
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Ahora puedes usar imágenes más grandes (hasta 16MB). Las imágenes muy grandes se optimizarán automáticamente.',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.blue,
+                    duration: Duration(seconds: 4),
+                  ),
+                );
+
                 String? newPath = await ImageUtils.pickImage();
                 if (newPath != null && mounted) {
                   widget.onImagenChanged(newPath);
+                } else if (newPath == null && mounted) {
+                  // Si la imagen no pudo ser procesada adecuadamente
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'No se pudo procesar la imagen. Se usará la imagen por defecto.',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: Colors.orange,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                  // Asignar null para usar la imagen por defecto
+                  widget.onImagenChanged(null);
                 }
               },
               icon: const Icon(Icons.image),
+              tooltip: "Seleccionar imagen",
             ),
             if (widget.imagenPath != null)
               IconButton(
                 onPressed: () => widget.onImagenChanged(null),
                 icon: const Icon(Icons.clear),
+                tooltip: "Eliminar imagen",
               ),
           ],
         ),

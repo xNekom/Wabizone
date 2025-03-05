@@ -420,15 +420,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ? 'Transferencia bancaria'
               : 'Pago contrareembolso';
 
-      final detallesPedido = 'Cliente: ${_nombreController.text}\n'
-              'Email: ${_emailController.text}\n'
-              'Teléfono: ${_telefonoController.text}\n'
-              'Dirección: $direccionCompleta\n\n'
-              'Método de pago: $metodoPagoTexto\n\n'
-              'Productos:\n' +
-          carritoProvider.cart.items.map((item) {
-            return '- ${item.nombre}: ${item.cantidad} x ${item.precio} = ${item.subtotal} €';
-          }).join('\n');
+      final detallesPedido =
+          'Cliente: ${_nombreController.text}\nEmail: ${_emailController.text}\nTeléfono: ${_telefonoController.text}\nDirección: $direccionCompleta\n\nMétodo de pago: $metodoPagoTexto\n\nProductos:\n${carritoProvider.cart.items.map((item) {
+        return '- ${item.nombre}: ${item.cantidad} x ${item.precio} = ${item.subtotal} €';
+      }).join('\n')}';
 
       // Crear el objeto Pedido (con ID temporal que será reemplazado por el backend)
       final nuevoPedido = Pedido(
@@ -438,6 +433,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         estadoPedido: 'Pendiente',
         precioTotal: carritoProvider.cart.total,
         usuarioId: usuarioProvider.usuarioActual?.id,
+        nombreUsuario: usuarioProvider.usuarioActual?.usuario,
+        nombreCompleto: _nombreController.text,
+        direccion: _direccionController.text,
+        ciudad: _ciudadController.text,
+        codigoPostal: _codigoPostalController.text,
+        telefono: _telefonoController.text,
+        email: _emailController.text,
+        comentarios: '',
       );
 
       // Crear el pedido en el backend

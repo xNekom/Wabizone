@@ -32,7 +32,7 @@ public class Product {
     @Column(name = "precio")
     private double precio;
 
-    @Column(name = "imagen")
+    @Column(name = "imagen", columnDefinition = "MEDIUMBLOB")
     private String imagen;
 
     public Product() {

@@ -25,18 +25,52 @@ class DioClient {
     };
 
     // Interceptores para manejo de errores y logging
+    _setupInterceptors();
+  }
+
+  // Interceptor para manejar errores de respuesta
+  _setupInterceptors() {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         print('SOLICITUD [${options.method}] => PATH: ${options.path}');
-        return handler.next(options);
+        handler.next(options);
       },
       onResponse: (response, handler) {
         print(
             'RESPUESTA [${response.statusCode}] => PATH: ${response.requestOptions.path}');
-        return handler.next(response);
+        handler.next(response);
       },
       onError: (DioException e, handler) {
-        print('ERROR [${e.response?.statusCode}] => ${e.message}');
+        print(
+            'ERROR [${e.response?.statusCode}] => This exception was thrown because ${e.message}');
+
+        // Imprimir información detallada para depuración
+        print('StatusCode: ${e.response?.statusCode}');
+        print('Request path: ${e.requestOptions.path}');
+        print('Request method: ${e.requestOptions.method}');
+
+        // Añadir manejo específico para errores comunes
+        final statusCode = e.response?.statusCode;
+        final path = e.requestOptions.path;
+
+        if (statusCode == 403) {
+          print('Manejando 403 - Usuario bloqueado o sin permisos: $path');
+          // Podemos modificar el error para hacerlo más específico
+          final responseData = e.response?.data;
+          if (path.contains('/login') || path.contains('/users/login')) {
+            // Es un intento de login, así que probablemente es un usuario bloqueado
+            final customError = DioException(
+              requestOptions: e.requestOptions,
+              response: e.response,
+              type: DioExceptionType.badResponse,
+              message:
+                  'Has sido baneado, por favor contacta con un administrador',
+            );
+            return handler.reject(customError);
+          }
+        }
+
+        // Pasar el error original si no lo manejamos específicamente
         return handler.next(e);
       },
     ));
@@ -93,8 +127,29 @@ class DioClient {
   Future<Response> put(String path,
       {dynamic data, Map<String, dynamic>? queryParameters}) async {
     try {
-      return await _dio.put(path, data: data, queryParameters: queryParameters);
+      print('DIO_PUT: Enviando PUT a $path');
+      if (data != null) {
+        print('DIO_PUT: Datos: $data');
+      }
+
+      final response =
+          await _dio.put(path, data: data, queryParameters: queryParameters);
+      print('DIO_PUT: Respuesta recibida con código: ${response.statusCode}');
+      return response;
     } on DioException catch (e) {
+      print('DIO_PUT: Error capturado: ${e.type} - ${e.message}');
+      print('DIO_PUT: StatusCode: ${e.response?.statusCode}');
+      print('DIO_PUT: Response data: ${e.response?.data}');
+
+      // Información detallada para errores 404 en PUT
+      if (e.response?.statusCode == 404) {
+        print(
+            'DIO_PUT: Error 404 - Recurso no encontrado en: ${e.requestOptions.path}');
+        print(
+            'DIO_PUT: Esto puede indicar que el ID no existe en la base de datos');
+        print('DIO_PUT: Datos enviados: ${e.requestOptions.data}');
+      }
+
       throw _handleError(e);
     }
   }
@@ -124,17 +179,45 @@ class DioClient {
     }
 
     // Manejar respuestas 404 para búsqueda de usuarios
-    if (e.response?.statusCode == 404 &&
-        (e.requestOptions.path.contains('/buscar') ||
-            e.requestOptions.method == 'GET' &&
-                e.requestOptions.path.contains('/users/'))) {
+    if (e.response?.statusCode == 404) {
       print('LOG_404: Detectado error 404 en ${e.requestOptions.path}');
       print('LOG_404: Request method: ${e.requestOptions.method}');
       print('LOG_404: Query params: ${e.requestOptions.queryParameters}');
-      print('LOG_404: Retornando not_found');
 
-      // Devolvemos una excepción específica para 404
-      return Exception('not_found');
+      // Para búsquedas de usuarios
+      if ((e.requestOptions.path.contains('/buscar') ||
+          e.requestOptions.method == 'GET' &&
+              e.requestOptions.path.contains('/users/'))) {
+        print('LOG_404: Retornando not_found para búsqueda de usuario');
+        return Exception('not_found');
+      }
+
+      // Para actualizaciones de usuarios
+      if (e.requestOptions.method == 'PUT' &&
+          e.requestOptions.path.contains('/users/')) {
+        print('LOG_404: Error en actualización de usuario - ID no encontrado');
+        return Exception('user_not_found');
+      }
+
+      // Para operaciones con productos
+      if (e.requestOptions.path.contains('/products/')) {
+        if (e.requestOptions.method == 'PUT') {
+          print(
+              'LOG_404: Error en actualización de producto - ID no encontrado: ${e.requestOptions.path}');
+          return Exception('producto_no_encontrado');
+        } else if (e.requestOptions.method == 'GET') {
+          print(
+              'LOG_404: Error en búsqueda de producto - ID no encontrado: ${e.requestOptions.path}');
+          return Exception('producto_no_encontrado');
+        } else if (e.requestOptions.method == 'DELETE') {
+          print(
+              'LOG_404: Error en eliminación de producto - ID no encontrado: ${e.requestOptions.path}');
+          return Exception('producto_no_encontrado');
+        }
+      }
+
+      // Para otros casos de 404
+      return Exception('resource_not_found');
     }
 
     // Manejar respuestas 409 para creación/actualización de usuarios
@@ -145,6 +228,30 @@ class DioClient {
       print(
           'Manejando 409 como "usuario ya existe" para: ${e.requestOptions.path}');
       return Exception('user_exists');
+    }
+
+    // Manejar respuestas 403 para usuarios bloqueados
+    if (e.response?.statusCode == 403 &&
+        e.requestOptions.path.contains('/users')) {
+      print(
+          'Manejando 403 - Usuario bloqueado o sin permisos: ${e.requestOptions.path}');
+
+      // Verificar si el mensaje indica que es un usuario bloqueado
+      final responseData = e.response?.data;
+      if (responseData != null &&
+          responseData is Map &&
+          responseData['message'] != null &&
+          responseData['message']
+              .toString()
+              .toLowerCase()
+              .contains('bloqueado')) {
+        return Exception(
+            'Has sido baneado, por favor contacta con un administrador');
+      }
+
+      // Si llegamos aquí, es un error 403 genérico relacionado con usuarios
+      return Exception(
+          'Has sido baneado, por favor contacta con un administrador');
     }
 
     switch (e.type) {

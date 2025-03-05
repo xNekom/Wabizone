@@ -22,10 +22,15 @@ class PedidoListItem extends StatefulWidget {
   State<PedidoListItem> createState() => _PedidoListItemState();
 }
 
-class _PedidoListItemState extends State<PedidoListItem> {
+class _PedidoListItemState extends State<PedidoListItem>
+    with AutomaticKeepAliveClientMixin {
   List<Map<String, dynamic>> productosEnPedido = [];
   bool _cargandoProductos = true;
   List<Producto> _todosLosProductos = [];
+  bool _isExpanded = false; // Estado para controlar el panel expandible
+
+  @override
+  bool get wantKeepAlive => true; // Mantener el estado cuando se desliza
 
   @override
   void initState() {
@@ -174,6 +179,14 @@ class _PedidoListItemState extends State<PedidoListItem> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Necesario para AutomaticKeepAliveClientMixin
+
+    // Depuración para verificar los valores del pedido
+    print('Construyendo PedidoListItem para pedido:');
+    print('ID: ${widget.pedido.id}');
+    print('nPedido: ${widget.pedido.nPedido}');
+    print('Usuario: ${widget.pedido.nombreUsuario}');
+
     return Card(
       margin: const EdgeInsets.all(8),
       child: Padding(
@@ -181,13 +194,43 @@ class _PedidoListItemState extends State<PedidoListItem> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Cabecera del pedido con ID y usuario
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Pedido: ${widget.pedido.id}",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Pedido #${widget.pedido.id}",
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      if (widget.pedido.nombreUsuario != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person,
+                                  size: 16, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  "Usuario: ${widget.pedido.nombreUsuario}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
                 if (widget.onDelete != null)
                   IconButton(
@@ -197,107 +240,210 @@ class _PedidoListItemState extends State<PedidoListItem> {
                   ),
               ],
             ),
-            if (widget.pedido.usuario != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  "Cliente: ${widget.pedido.usuario}",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              ),
-            const SizedBox(height: 16),
 
-            // Listado de productos
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Productos:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-                // Lista de productos
-                if (_cargandoProductos)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: CircularProgressIndicator(),
+            // Panel expandible para datos de envío y productos
+            ExpansionTile(
+              initiallyExpanded: _isExpanded,
+              maintainState: true, // Mantener el estado del contenido
+              onExpansionChanged: (expanded) {
+                setState(() {
+                  _isExpanded = expanded;
+                });
+              },
+              title: Row(
+                children: [
+                  const Icon(Icons.shopping_bag, size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Detalles del envío",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-                else if (productosEnPedido.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text("No hay detalles de productos disponibles"),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: productosEnPedido.length,
-                    itemBuilder: (context, index) {
-                      final item = productosEnPedido[index];
-                      final producto = item['producto'] as Producto;
-                      final cantidad = item['cantidad'] as int;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Row(
-                          children: [
-                            // Imagen del producto
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: _buildProductImage(producto.imagen),
-                            ),
-                            const SizedBox(width: 12),
-                            // Detalles del producto
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    producto.nombre,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "$cantidad x ${FormatUtils.formatPrice(producto.precio)}",
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Precio total
-                            Text(
-                              FormatUtils.formatPrice(
-                                  cantidad * producto.precio),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
                   ),
+                ],
+              ),
+              children: [
+                // Datos del cliente
+                if (widget.pedido.nombreCompleto != null)
+                  Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Datos del cliente:",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoRow(
+                            Icons.person, widget.pedido.nombreCompleto!),
+                      ],
+                    ),
+                  ),
+
+                // Datos de envío
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Datos de envío:",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (widget.pedido.direccion != null)
+                        _buildInfoRow(
+                            Icons.location_on, widget.pedido.direccion!),
+                      if (widget.pedido.ciudad != null)
+                        _buildInfoRow(
+                            Icons.location_city, widget.pedido.ciudad!),
+                      if (widget.pedido.codigoPostal != null)
+                        _buildInfoRow(Icons.local_post_office,
+                            widget.pedido.codigoPostal!),
+                      if (widget.pedido.telefono != null)
+                        _buildInfoRow(Icons.phone, widget.pedido.telefono!),
+                      if (widget.pedido.email != null)
+                        _buildInfoRow(Icons.email, widget.pedido.email!),
+                      if (widget.pedido.comentarios != null &&
+                          widget.pedido.comentarios!.isNotEmpty)
+                        _buildInfoRow(
+                            Icons.comment, widget.pedido.comentarios!),
+                    ],
+                  ),
+                ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Total del pedido
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    "Total: ${FormatUtils.formatPrice(widget.pedido.total)}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Listado de productos (FUERA del ExpansionTile)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Productos:",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Lista de productos
+                  if (_cargandoProductos)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  else if (productosEnPedido.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text("No hay detalles de productos disponibles"),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: productosEnPedido.length,
+                      itemBuilder: (context, index) {
+                        final item = productosEnPedido[index];
+                        final producto = item['producto'] as Producto;
+                        final cantidad = item['cantidad'] as int;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            children: [
+                              // Imagen del producto
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: _buildProductImage(producto.imagen),
+                              ),
+                              const SizedBox(width: 12),
+                              // Detalles del producto
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      producto.nombre,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "$cantidad x ${FormatUtils.formatPrice(producto.precio)}",
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Precio total
+                              Text(
+                                FormatUtils.formatPrice(
+                                    producto.precio * cantidad),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
             ),
 
             const Divider(height: 24),
 
+            // Estado del pedido
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  "Total: ${FormatUtils.formatPrice(widget.pedido.total)}",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                ),
                 if (widget.onEstadoChanged != null)
                   _buildEstadoDropdown(context)
                 else
@@ -437,6 +583,99 @@ class _PedidoListItemState extends State<PedidoListItem> {
       );
     }
 
+    print('Intentando cargar imagen de pedido: $imagePath');
+
+    // Detectar si la imagen es un ID de producto específico
+    if (imagePath.startsWith('p') &&
+        !imagePath.contains('/') &&
+        !imagePath.contains('.')) {
+      final productId = imagePath.substring(1);
+      print(
+          'Pedido: Detectado ID de producto: $imagePath, extrayendo número: $productId');
+      final specificImagePath = 'assets/imagenes/prod$productId.png';
+      print('Pedido: Intentando cargar imagen específica: $specificImagePath');
+
+      return SizedBox(
+        width: 50,
+        height: 50,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Image.asset(
+            specificImagePath,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print(
+                  'Error cargando imagen específica: $error - Ruta: $specificImagePath');
+              return Container(
+                width: 50,
+                height: 50,
+                color: Colors.grey.shade300,
+                child: const Icon(Icons.broken_image,
+                    size: 30, color: Colors.grey),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Para imágenes de productos específicos conocidos
+    if (imagePath == 'p1' ||
+        imagePath == 'Producto 1' ||
+        imagePath.contains('prod1') ||
+        imagePath.contains('Producto 1')) {
+      print('Pedido: Usando imagen específica para Producto 1');
+      return SizedBox(
+        width: 50,
+        height: 50,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Image.asset(
+            'assets/imagenes/prod1.png',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print('Error cargando imagen específica: $error');
+              return Container(
+                width: 50,
+                height: 50,
+                color: Colors.grey.shade300,
+                child: const Icon(Icons.broken_image,
+                    size: 30, color: Colors.grey),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    if (imagePath == 'p4' ||
+        imagePath == 'Producto 4' ||
+        imagePath.contains('prod4') ||
+        imagePath.contains('Producto 4')) {
+      print('Pedido: Usando imagen específica para Producto 4');
+      return SizedBox(
+        width: 50,
+        height: 50,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Image.asset(
+            'assets/imagenes/prod4.png',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print('Error cargando imagen específica: $error');
+              return Container(
+                width: 50,
+                height: 50,
+                color: Colors.grey.shade300,
+                child: const Icon(Icons.broken_image,
+                    size: 30, color: Colors.grey),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
     // Asegurar que la ruta de la imagen tenga el formato correcto
     final String processedImagePath = imagePath.startsWith('assets/')
         ? imagePath
@@ -454,6 +693,32 @@ class _PedidoListItemState extends State<PedidoListItem> {
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             print('Error cargando imagen: $error - Ruta: $processedImagePath');
+            // Intentar con una ruta alternativa
+            if (!imagePath.startsWith('assets/imagenes/') &&
+                !imagePath.startsWith('assets/images/') &&
+                !imagePath.startsWith('http')) {
+              try {
+                print('Intentando con ruta alternativa para $imagePath');
+                return Image.asset(
+                  'assets/imagenes/prod${imagePath.replaceAll(RegExp(r'[^0-9]'), '')}.png',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 50,
+                      height: 50,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.broken_image,
+                          size: 30, color: Colors.grey),
+                    );
+                  },
+                );
+              } catch (e) {
+                print('Error con ruta alternativa: $e');
+              }
+            }
+
             return Container(
               width: 50,
               height: 50,
@@ -463,6 +728,29 @@ class _PedidoListItemState extends State<PedidoListItem> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  // Método para construir una fila de información con icono y texto
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[800],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

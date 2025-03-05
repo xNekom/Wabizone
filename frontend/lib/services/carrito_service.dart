@@ -30,9 +30,20 @@ class CarritoService {
     } catch (e) {
       if (e is DioException) {
         if (e.response?.statusCode == 404) {
-          throw Exception('Carrito no encontrado');
+          print(
+              'Carrito no encontrado para el usuario $userId, creando uno nuevo');
+          try {
+            // Intentar crear un nuevo carrito para el usuario
+            final newCart = await createNewCart(userId, null);
+            return newCart;
+          } catch (createError) {
+            print('Error al crear nuevo carrito: $createError');
+            // Si falla la creación, devolver un carrito vacío
+            return ShoppingCart.empty();
+          }
         }
       }
+      print('Error al obtener carrito del usuario $userId: $e');
       throw Exception('Error obteniendo carrito: $e');
     }
   }

@@ -6,6 +6,9 @@ import '../utils/format_utils.dart';
 import '../utils/image_utils.dart';
 import '../providers/carrito_provider.dart';
 import '../screens/cart_screen.dart';
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 
 class ProductoListItem extends StatelessWidget {
   final Producto producto;
@@ -35,10 +38,7 @@ class ProductoListItem extends StatelessWidget {
             SizedBox(
               width: 100,
               height: 100,
-              child: Image(
-                image: ImageUtils.getImageProvider(producto.imagen),
-                fit: BoxFit.cover,
-              ),
+              child: _buildProductImage(context),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -184,5 +184,137 @@ class ProductoListItem extends StatelessWidget {
         throw Exception('ID de producto inválido');
       }
     }
+  }
+
+  Widget _buildProductImage(BuildContext context) {
+    try {
+      print(
+          'ProductoListItem: Construyendo imagen para producto: ${producto.id} - ${producto.nombre}');
+      print('ProductoListItem: Ruta de imagen: ${producto.imagen}');
+
+      // Si el producto tiene una imagen específica (no vacía y no es la imagen por defecto)
+      if (producto.imagen.isNotEmpty &&
+          !producto.imagen.contains('producto_default.png')) {
+        // Verificar si es una imagen base64
+        if (producto.imagen.startsWith('data:image')) {
+          print('ProductoListItem: Detectada imagen base64');
+          try {
+            return Image.memory(
+              ImageUtils.extractImageBytes(producto.imagen),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                print(
+                    'ProductoListItem: Error al cargar imagen base64: $error');
+                // Si falla, intentamos con la imagen específica para Producto 4
+                if (producto.id == 'p4' || producto.id == '4') {
+                  return Image.asset(
+                    'assets/imagenes/prod4.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildErrorImage(context),
+                  );
+                }
+                return _buildErrorImage(context);
+              },
+            );
+          } catch (e) {
+            print('ProductoListItem: Error al procesar imagen base64: $e');
+            // Si falla, intentamos con la imagen específica para Producto 4
+            if (producto.id == 'p4' || producto.id == '4') {
+              return Image.asset(
+                'assets/imagenes/prod4.png',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildErrorImage(context),
+              );
+            }
+            return _buildErrorImage(context);
+          }
+        }
+
+        // Si es una ruta de asset
+        if (producto.imagen.startsWith('assets/')) {
+          print(
+              'ProductoListItem: Detectada ruta de asset: ${producto.imagen}');
+          return Image.asset(
+            producto.imagen,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print('ProductoListItem: Error al cargar asset: $error');
+              // Si falla, intentamos con la imagen específica para Producto 4
+              if (producto.id == 'p4' || producto.id == '4') {
+                return Image.asset(
+                  'assets/imagenes/prod4.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildErrorImage(context),
+                );
+              }
+              return _buildErrorImage(context);
+            },
+          );
+        }
+
+        // Si es una URL
+        if (producto.imagen.startsWith('http')) {
+          print(
+              'ProductoListItem: Detectada URL de imagen: ${producto.imagen}');
+          return Image.network(
+            producto.imagen,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print('ProductoListItem: Error al cargar imagen de red: $error');
+              // Si falla, intentamos con la imagen específica para Producto 4
+              if (producto.id == 'p4' || producto.id == '4') {
+                return Image.asset(
+                  'assets/imagenes/prod4.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildErrorImage(context),
+                );
+              }
+              return _buildErrorImage(context);
+            },
+          );
+        }
+      }
+
+      // Caso especial para Producto 4 - Siempre intentamos cargar la imagen específica como fallback
+      if (producto.id == 'p4' || producto.id == '4') {
+        print('ProductoListItem: Cargando imagen específica para Producto 4');
+        return Image.asset(
+          'assets/imagenes/prod4.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print(
+                'ProductoListItem: Error al cargar imagen de Producto 4: $error');
+            return _buildErrorImage(context);
+          },
+        );
+      }
+
+      // Para otros productos, usamos el ImageProvider de ImageUtils
+      return Image(
+        image: ImageUtils.getImageProvider(producto.imagen),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('ProductoListItem: Error al cargar imagen: $error');
+          return _buildErrorImage(context);
+        },
+      );
+    } catch (e) {
+      print('ProductoListItem: Error general al construir imagen: $e');
+      return _buildErrorImage(context);
+    }
+  }
+
+  // Método para construir una imagen de error
+  Widget _buildErrorImage(BuildContext context) {
+    return Container(
+      color: Colors.grey[300],
+      child: Center(
+        child: Icon(
+          Icons.image_not_supported,
+          color: Colors.grey[600],
+          size: 40,
+        ),
+      ),
+    );
   }
 }

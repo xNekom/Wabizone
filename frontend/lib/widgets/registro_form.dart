@@ -17,6 +17,9 @@ class RegistroForm extends StatelessWidget {
   final bool aceptaTerminos;
   final Function(bool?) onTerminosChanged;
   final List<String> capitales;
+  final TextEditingController nombreController;
+  final TextEditingController apellidosController;
+  final Function(BuildContext)? onRegistroExitoso;
 
   const RegistroForm({
     super.key,
@@ -34,6 +37,9 @@ class RegistroForm extends StatelessWidget {
     required this.aceptaTerminos,
     required this.onTerminosChanged,
     required this.capitales,
+    required this.nombreController,
+    required this.apellidosController,
+    this.onRegistroExitoso,
   });
 
   @override
@@ -63,22 +69,49 @@ class RegistroForm extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  imagenPath != null
-                      ? imagenPath!
-                      : "No se ha seleccionado imagen",
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: ImageUtils.validateImageFormat(imagenPath) != null
-                        ? Colors.red
-                        : Colors.black,
+              if (imagenPath != null)
+                Container(
+                  width: 60,
+                  height: 60,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: ImageUtils.getImageProvider(imagenPath),
+                      fit: BoxFit.cover,
+                    ),
                   ),
+                ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Imagen de perfil:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      imagenPath != null
+                          ? imagenPath!.length > 30
+                              ? "Imagen seleccionada"
+                              : imagenPath!
+                          : "No se ha seleccionado imagen",
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color:
+                            ImageUtils.validateImageFormat(imagenPath) != null
+                                ? Colors.red
+                                : Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(
                 onPressed: onSelectImage,
                 icon: const Icon(Icons.image),
+                tooltip: "Seleccionar imagen",
               ),
             ],
           ),

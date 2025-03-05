@@ -66,24 +66,69 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     validator: ValidationUtils.validateStock,
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          imagenPath ?? "No se ha seleccionado imagen",
-                          overflow: TextOverflow.ellipsis,
+                  GestureDetector(
+                    onTap: () async {
+                      final nuevaImagen = await ImageUtils.pickImage();
+                      if (nuevaImagen != null) {
+                        setDialogState(() {
+                          imagenPath = nuevaImagen;
+                        });
+                      }
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Constants.primaryColor.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: (imagenPath == null || imagenPath!.isEmpty)
+                              ? Icon(Icons.image,
+                                  size: 80, color: Constants.primaryColor)
+                              : ClipOval(
+                                  child: Image(
+                                    image: ImageUtils.getImageProvider(
+                                        imagenPath!),
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print(
+                                          'Error al cargar imagen en diálogo de producto: $error');
+                                      return Icon(Icons.broken_image,
+                                          size: 80,
+                                          color: Constants.primaryColor);
+                                    },
+                                  ),
+                                ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          String? newPath = await ImageUtils.pickImage();
-                          if (newPath != null) {
-                            setDialogState(() => imagenPath = newPath);
-                          }
-                        },
-                        icon: const Icon(Icons.image),
-                      ),
-                    ],
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            backgroundColor: Constants.primaryColor,
+                            radius: 18,
+                            child: const Icon(Icons.camera_alt,
+                                color: Colors.white, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    imagenPath != null && imagenPath!.isNotEmpty
+                        ? "Imagen seleccionada"
+                        : "Selecciona una imagen para el producto",
+                    style: TextStyle(
+                      color: imagenPath != null && imagenPath!.isNotEmpty
+                          ? Colors.green
+                          : Colors.grey,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),
@@ -120,7 +165,8 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                       precio: double.parse(
                           precioController.text.replaceAll(',', '.')),
                       stock: int.parse(stockController.text),
-                      imagen: imagenPath ?? ImageUtils.getDefaultImage(false),
+                      imagen:
+                          imagenPath ?? 'assets/imagenes/producto_default.png',
                     );
 
                     final productoProvider =
@@ -223,6 +269,36 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
   }
 
   void _editarProducto(Producto producto) {
+    // Primero verificamos si el producto existe
+    final productoProvider =
+        Provider.of<ProductoProvider>(context, listen: false);
+
+    DialogUtils.showLoadingSpinner(context);
+
+    productoProvider
+        .obtenerProductoPorId(producto.id)
+        .then((productoExistente) {
+      Navigator.of(context).pop(); // Cerrar spinner
+
+      if (productoExistente == null) {
+        // El producto no existe
+        DialogUtils.showSnackBar(context,
+            "No se encontró el producto con ID ${producto.id}. No se puede editar.",
+            color: Constants.errorColor);
+        return;
+      }
+
+      // Si el producto existe, continuamos con la edición
+      _mostrarDialogoEdicion(producto);
+    }).catchError((error) {
+      Navigator.of(context).pop(); // Cerrar spinner
+      DialogUtils.showSnackBar(
+          context, "Error al verificar si el producto existe: $error",
+          color: Constants.errorColor);
+    });
+  }
+
+  void _mostrarDialogoEdicion(Producto producto) {
     TextEditingController nombreController =
         TextEditingController(text: producto.nombre);
     TextEditingController descripcionController =
@@ -265,24 +341,69 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     validator: ValidationUtils.validateStock,
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          imagenPath ?? "No se ha seleccionado imagen",
-                          overflow: TextOverflow.ellipsis,
+                  GestureDetector(
+                    onTap: () async {
+                      final nuevaImagen = await ImageUtils.pickImage();
+                      if (nuevaImagen != null) {
+                        setDialogState(() {
+                          imagenPath = nuevaImagen;
+                        });
+                      }
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Constants.primaryColor.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: (imagenPath == null || imagenPath!.isEmpty)
+                              ? Icon(Icons.image,
+                                  size: 80, color: Constants.primaryColor)
+                              : ClipOval(
+                                  child: Image(
+                                    image: ImageUtils.getImageProvider(
+                                        imagenPath!),
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print(
+                                          'Error al cargar imagen en diálogo de producto: $error');
+                                      return Icon(Icons.broken_image,
+                                          size: 80,
+                                          color: Constants.primaryColor);
+                                    },
+                                  ),
+                                ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          String? newPath = await ImageUtils.pickImage();
-                          if (newPath != null) {
-                            setDialogState(() => imagenPath = newPath);
-                          }
-                        },
-                        icon: const Icon(Icons.image),
-                      ),
-                    ],
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            backgroundColor: Constants.primaryColor,
+                            radius: 18,
+                            child: const Icon(Icons.camera_alt,
+                                color: Colors.white, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    imagenPath != null && imagenPath!.isNotEmpty
+                        ? "Imagen seleccionada"
+                        : "Selecciona una imagen para el producto",
+                    style: TextStyle(
+                      color: imagenPath != null && imagenPath!.isNotEmpty
+                          ? Colors.green
+                          : Colors.grey,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),
@@ -326,16 +447,35 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     // Extraer el ID numérico del producto
                     int productId = 0;
                     try {
+                      print(
+                          'Extrayendo ID numérico para producto: ${producto.id}');
                       if (producto.id.startsWith("p")) {
                         // Intenta extraer un número de la parte "p1234" del ID
-                        productId = int.parse(
-                            producto.id.replaceAll(RegExp(r'[^0-9]'), ''));
+                        String numberPart =
+                            producto.id.replaceAll(RegExp(r'[^0-9]'), '');
+                        print('Parte numérica extraída: $numberPart');
+
+                        if (numberPart.isNotEmpty) {
+                          productId = int.parse(numberPart);
+                        } else {
+                          print(
+                              'No se pudo extraer parte numérica del ID ${producto.id}');
+                          productId = 0;
+                        }
                       } else {
                         // Intenta convertir todo el ID a entero
-                        productId = int.parse(producto.id);
+                        try {
+                          productId = int.parse(producto.id);
+                        } catch (parseError) {
+                          print(
+                              'No se pudo convertir ${producto.id} a entero: $parseError');
+                          productId = 0;
+                        }
                       }
+                      print('ID numérico extraído: $productId');
                     } catch (e) {
                       // En caso de error, usa 0 como fallback
+                      print('Error al extraer ID numérico: $e');
                       productId = 0;
                     }
 
@@ -352,7 +492,17 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           context, "Producto actualizado correctamente",
                           color: Constants.successColor);
                     } else {
-                      DialogUtils.showSnackBar(context, productoProvider.error,
+                      // Mensaje más descriptivo basado en el error
+                      String errorMsg = productoProvider.error;
+                      if (errorMsg.contains('producto_no_encontrado')) {
+                        errorMsg =
+                            "No se encontró el producto con ID ${producto.id}";
+                      } else if (errorMsg.isEmpty) {
+                        errorMsg =
+                            "Error al actualizar el producto. Verifique la conexión con el servidor.";
+                      }
+
+                      DialogUtils.showSnackBar(context, errorMsg,
                           color: Constants.errorColor);
                     }
                   } catch (e) {
