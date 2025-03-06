@@ -39,12 +39,10 @@ class _PedidoCardState extends State<PedidoCard> {
     });
 
     try {
-      // Obtener todos los productos
       _todosLosProductos = await ProductoService.obtenerTodosProductos();
-      // Parsear los detalles del pedido
       productosEnPedido = _parsearDetallesPedido(widget.pedido.detallesPedido);
     } catch (e) {
-      print('Error al cargar productos: $e');
+      // Se ignora la excepción y se continúa con la lista vacía de productos
     } finally {
       setState(() {
         _cargandoProductos = false;
@@ -52,31 +50,24 @@ class _PedidoCardState extends State<PedidoCard> {
     }
   }
 
-  // Método para parsear los detalles del pedido y extraer productos, cantidades y precios
   List<Map<String, dynamic>> _parsearDetallesPedido(String detalles) {
     List<Map<String, dynamic>> resultado = [];
-
-    // Dividir por líneas
     List<String> lineas = detalles.split('\n');
 
     for (String linea in lineas) {
       if (linea.trim().isEmpty) continue;
 
-      // Formato esperado: "Nombre Producto: cantidad x precio"
       int indexDosPuntos = linea.indexOf(':');
       if (indexDosPuntos == -1) continue;
 
       String nombreProducto = linea.substring(0, indexDosPuntos).trim();
       String resto = linea.substring(indexDosPuntos + 1).trim();
 
-      // Extraer cantidad y precio
       List<String> partes = resto.split('x');
       if (partes.length < 2) continue;
 
       int cantidad = int.tryParse(partes[0].trim()) ?? 0;
-      String precioStr = partes[1].trim();
 
-      // Buscar el producto en la lista de todos los productos
       Producto? productoEncontrado = _todosLosProductos.firstWhere(
         (p) => p.nombre == nombreProducto,
         orElse: () => Producto(
@@ -88,10 +79,6 @@ class _PedidoCardState extends State<PedidoCard> {
           precio: 0,
         ),
       );
-
-      // Depuración
-      print(
-          'Producto encontrado: ${productoEncontrado.nombre}, Imagen: ${productoEncontrado.imagen}');
 
       resultado.add({
         'producto': productoEncontrado,
@@ -127,8 +114,6 @@ class _PedidoCardState extends State<PedidoCard> {
                 ),
               ),
             const SizedBox(height: 16),
-
-            // Listado de productos
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -137,8 +122,6 @@ class _PedidoCardState extends State<PedidoCard> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-
-                // Lista de productos
                 if (_cargandoProductos)
                   const Center(
                     child: Padding(
@@ -165,13 +148,11 @@ class _PedidoCardState extends State<PedidoCard> {
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Row(
                           children: [
-                            // Imagen del producto
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: _buildProductImage(producto.imagen),
                             ),
                             const SizedBox(width: 12),
-                            // Detalles del producto
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +173,6 @@ class _PedidoCardState extends State<PedidoCard> {
                                 ],
                               ),
                             ),
-                            // Precio total
                             Text(
                               FormatUtils.formatPrice(
                                   cantidad * producto.precio),
@@ -207,9 +187,7 @@ class _PedidoCardState extends State<PedidoCard> {
                   ),
               ],
             ),
-
             const Divider(height: 24),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -257,13 +235,11 @@ class _PedidoCardState extends State<PedidoCard> {
     );
   }
 
-  // Método para construir la imagen del producto
   Widget _buildProductImage(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
       return const Icon(Icons.image_not_supported, size: 50);
     }
 
-    // Verificar si la ruta es una URL completa
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return Image.network(
         imagePath,
@@ -271,13 +247,11 @@ class _PedidoCardState extends State<PedidoCard> {
         width: 60,
         height: 60,
         errorBuilder: (context, error, stackTrace) {
-          print('Error cargando imagen de red: $error');
           return const Icon(Icons.broken_image, size: 50);
         },
       );
     }
 
-    // Verificar si es un asset completo
     if (imagePath.startsWith('assets/')) {
       return Image.asset(
         imagePath,
@@ -285,32 +259,26 @@ class _PedidoCardState extends State<PedidoCard> {
         width: 60,
         height: 60,
         errorBuilder: (context, error, stackTrace) {
-          print('Error cargando asset: $error');
           return const Icon(Icons.broken_image, size: 50);
         },
       );
     }
 
-    // Si solo tenemos el nombre del archivo (como 'prod1.png'), asumimos que está en assets/imagenes/
     if (imagePath.endsWith('.png') ||
         imagePath.endsWith('.jpg') ||
         imagePath.endsWith('.jpeg')) {
       String fullPath = 'assets/imagenes/$imagePath';
-      print('Intentando cargar imagen desde: $fullPath');
       return Image.asset(
         fullPath,
         fit: BoxFit.cover,
         width: 60,
         height: 60,
         errorBuilder: (context, error, stackTrace) {
-          print(
-              'Error cargando imagen con ruta construida ($fullPath): $error');
           return const Icon(Icons.broken_image, size: 50);
         },
       );
     }
 
-    // En cualquier otro caso
     return const Icon(Icons.image_not_supported, size: 50);
   }
 }

@@ -3,29 +3,23 @@ import '../models/pedido.dart';
 import '../repositories/pedido_repository.dart';
 import '../services/service_locator.dart';
 
-/// Provider para gestionar el estado relacionado con los pedidos
 class PedidoProvider with ChangeNotifier {
-  // Repositorio de pedidos
   final IPedidoRepository _pedidoRepository;
 
-  // Estado del provider
   bool _isLoading = false;
   String _error = '';
   List<Pedido> _pedidos = [];
   Pedido? _pedidoSeleccionado;
 
-  // Getters para acceder al estado
   bool get isLoading => _isLoading;
   String get error => _error;
   List<Pedido> get pedidos => _pedidos;
   Pedido? get pedidoSeleccionado => _pedidoSeleccionado;
 
-  // Constructor que recibe el repositorio
   PedidoProvider({IPedidoRepository? pedidoRepository})
       : _pedidoRepository =
             pedidoRepository ?? ServiceLocator().pedidoRepository;
 
-  /// Obtener todos los pedidos
   Future<void> obtenerTodosPedidos() async {
     _setLoading(true);
     _setError('');
@@ -40,7 +34,6 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Obtener pedidos por estado
   Future<List<Pedido>> obtenerPedidosPorEstado(String estado) async {
     _setLoading(true);
     _setError('');
@@ -56,19 +49,16 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Seleccionar un pedido específico
   void seleccionarPedido(Pedido pedido) {
     _pedidoSeleccionado = pedido;
     notifyListeners();
   }
 
-  /// Limpiar la selección de pedido
   void limpiarSeleccion() {
     _pedidoSeleccionado = null;
     notifyListeners();
   }
 
-  /// Obtener un pedido por su ID
   Future<Pedido?> obtenerPedidoPorId(String id) async {
     _setLoading(true);
     _setError('');
@@ -92,7 +82,6 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Crear un nuevo pedido
   Future<Pedido?> crearPedido(Pedido pedido) async {
     _setLoading(true);
     _setError('');
@@ -101,7 +90,7 @@ class PedidoProvider with ChangeNotifier {
       final nuevoPedido = await _pedidoRepository.crear(pedido);
 
       if (nuevoPedido != null) {
-        await obtenerTodosPedidos(); // Refrescar la lista
+        await obtenerTodosPedidos();
         _pedidoSeleccionado = nuevoPedido;
       } else {
         _setError('No se pudo crear el pedido');
@@ -117,7 +106,6 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Actualizar un pedido existente
   Future<bool> actualizarPedido(Pedido pedido, String id) async {
     _setLoading(true);
     _setError('');
@@ -126,12 +114,12 @@ class PedidoProvider with ChangeNotifier {
       final result = await _pedidoRepository.actualizar(pedido, id);
 
       if (result) {
-        // Si es el pedido seleccionado, actualizar la instancia
-        if (_pedidoSeleccionado != null && _pedidoSeleccionado!.nPedido == id) {
+        if (_pedidoSeleccionado != null &&
+            _pedidoSeleccionado!.nPedido == int.parse(id)) {
           _pedidoSeleccionado = pedido;
         }
 
-        await obtenerTodosPedidos(); // Refrescar la lista
+        await obtenerTodosPedidos();
       } else {
         _setError('No se pudo actualizar el pedido');
       }
@@ -145,13 +133,11 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Cambiar el estado de un pedido
   Future<bool> cambiarEstadoPedido(String id, String nuevoEstado) async {
     _setLoading(true);
     _setError('');
 
     try {
-      // Primero obtener el pedido actual
       final pedido = await _pedidoRepository.obtenerPorId(id);
 
       if (pedido == null) {
@@ -160,10 +146,8 @@ class PedidoProvider with ChangeNotifier {
         return false;
       }
 
-      // Actualizar el estado
       pedido.estadoPedido = nuevoEstado;
 
-      // Guardar los cambios
       return await actualizarPedido(pedido, id);
     } catch (e) {
       _setError('Error al cambiar estado del pedido: $e');
@@ -172,7 +156,6 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  /// Eliminar un pedido
   Future<bool> eliminarPedido(String id) async {
     _setLoading(true);
     _setError('');
@@ -181,15 +164,14 @@ class PedidoProvider with ChangeNotifier {
       final result = await _pedidoRepository.eliminar(id);
 
       if (result) {
-        // Si es el pedido seleccionado, limpiar la selección
-        if (_pedidoSeleccionado != null && _pedidoSeleccionado!.nPedido == id) {
+        if (_pedidoSeleccionado != null &&
+            _pedidoSeleccionado!.nPedido == int.parse(id)) {
           _pedidoSeleccionado = null;
         }
 
-        // Eliminar de la lista local
-        _pedidos.removeWhere((pedido) => pedido.nPedido == id);
+        _pedidos.removeWhere((pedido) => pedido.nPedido == int.parse(id));
 
-        await obtenerTodosPedidos(); // Refrescar la lista completa
+        await obtenerTodosPedidos();
       } else {
         _setError('No se pudo eliminar el pedido');
       }
@@ -204,13 +186,11 @@ class PedidoProvider with ChangeNotifier {
     }
   }
 
-  // Método interno para establecer el estado de carga
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
 
-  // Método interno para establecer el mensaje de error
   void _setError(String errorMessage) {
     _error = errorMessage;
     if (errorMessage.isNotEmpty) {

@@ -63,52 +63,42 @@ class ContactoScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Teléfono con acción
             InkWell(
               onTap: _launchPhone,
               child: const ContactItem(
                 icon: Icons.phone,
                 title: "Teléfono",
-                content: "+34 123 456 789",
+                subtitle: "+34 123 456 789",
                 actionText: "Llamar ahora",
               ),
             ),
-
-            // Email con acción
             InkWell(
               onTap: _launchEmail,
               child: const ContactItem(
                 icon: Icons.email,
                 title: "Email",
-                content: "soporte@wabizone.com",
+                subtitle: "soporte@wabizone.com",
                 actionText: "Enviar correo",
               ),
             ),
-
-            // Sitio web con acción
             InkWell(
               onTap: () => _launchURL("https://www.wabizone.com"),
               child: const ContactItem(
                 icon: Icons.web,
                 title: "Sitio Web",
-                content: "www.wabizone.com",
+                subtitle: "www.wabizone.com",
                 actionText: "Visitar web",
               ),
             ),
-
-            // Dirección con acción para abrir maps
             InkWell(
               onTap: _launchMaps,
               child: const ContactItem(
                 icon: Icons.location_on,
                 title: "Dirección",
-                content: "Calle Principal 123, Madrid",
+                subtitle: "Calle Principal 123, Madrid",
                 actionText: "Ver en mapa",
               ),
             ),
-
-            // Redes sociales
             const SizedBox(height: 24),
             Text(
               "Redes Sociales",
@@ -142,7 +132,6 @@ class ContactoScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
             Text(
               "Horario de Atención",
@@ -156,8 +145,6 @@ class ContactoScreen extends StatelessWidget {
             const Text("Lunes a Viernes: 9:00 - 20:00"),
             const Text("Sábados: 10:00 - 14:00"),
             const Text("Domingos: Cerrado"),
-
-            // Información adicional
             const SizedBox(height: 24),
             Text(
               "Sobre Nosotros",
@@ -175,8 +162,6 @@ class ContactoScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.justify,
             ),
-
-            // Mapa estático (simulado con un Container)
             const SizedBox(height: 24),
             Text(
               "Nuestra Ubicación",

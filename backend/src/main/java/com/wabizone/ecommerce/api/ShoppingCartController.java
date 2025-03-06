@@ -1,6 +1,5 @@
 package com.wabizone.ecommerce.api;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,6 @@ public class ShoppingCartController {
         this.shoppingCartRepository = shoppingCartRepository;
     }
 
-    // Obtener carrito por ID de sesión (usuarios no autenticados)
     @GetMapping("/session/{sessionId}")
     public ResponseEntity<ShoppingCart> getCartBySessionId(@PathVariable String sessionId) {
         Optional<ShoppingCart> cart = shoppingCartRepository.findBySessionId(sessionId);
@@ -34,7 +32,6 @@ public class ShoppingCartController {
                 });
     }
 
-    // Obtener carrito por ID de usuario (usuarios autenticados)
     @GetMapping("/user/{userId}")
     public ResponseEntity<ShoppingCart> getCartByUserId(@PathVariable Long userId) {
         Optional<ShoppingCart> cart = shoppingCartRepository.findByUsuarioId(userId);
@@ -45,7 +42,6 @@ public class ShoppingCartController {
                 });
     }
 
-    // Añadir producto al carrito
     @PostMapping("/{cartId}/items")
     public ResponseEntity<ShoppingCart> addItemToCart(@PathVariable String cartId, @RequestBody CartItem item) {
         Optional<ShoppingCart> optionalCart = shoppingCartRepository.findById(cartId);
@@ -57,7 +53,6 @@ public class ShoppingCartController {
         return ResponseEntity.notFound().build();
     }
 
-    // Actualizar cantidad de un producto en el carrito
     @PutMapping("/{cartId}/items/{productId}")
     public ResponseEntity<ShoppingCart> updateItemQuantity(
             @PathVariable String cartId,
@@ -73,7 +68,6 @@ public class ShoppingCartController {
         return ResponseEntity.notFound().build();
     }
 
-    // Eliminar producto del carrito
     @DeleteMapping("/{cartId}/items/{productId}")
     public ResponseEntity<ShoppingCart> removeItemFromCart(
             @PathVariable String cartId,
@@ -88,7 +82,6 @@ public class ShoppingCartController {
         return ResponseEntity.notFound().build();
     }
 
-    // Vaciar carrito
     @DeleteMapping("/{cartId}")
     public ResponseEntity<ShoppingCart> clearCart(@PathVariable String cartId) {
         Optional<ShoppingCart> optionalCart = shoppingCartRepository.findById(cartId);
@@ -100,7 +93,6 @@ public class ShoppingCartController {
         return ResponseEntity.notFound().build();
     }
     
-    // Transferir carrito de sesión a usuario (cuando un usuario inicia sesión)
     @PostMapping("/transfer")
     public ResponseEntity<ShoppingCart> transferSessionCartToUser(
             @RequestParam String sessionId,
@@ -111,27 +103,49 @@ public class ShoppingCartController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         
-        // Buscar si el usuario ya tiene un carrito
         Optional<ShoppingCart> userCart = shoppingCartRepository.findByUsuarioId(userId);
         
         if (userCart.isPresent()) {
-            // Si el usuario ya tiene carrito, transferir los elementos del carrito de sesión
             ShoppingCart existingUserCart = userCart.get();
             for (CartItem item : sessionCart.get().getItems()) {
                 existingUserCart.addItem(item);
             }
             
-            // Eliminar el carrito de sesión
             shoppingCartRepository.delete(sessionCart.get());
             
-            // Guardar el carrito actualizado del usuario
             return ResponseEntity.ok(shoppingCartRepository.save(existingUserCart));
         } else {
-            // Si el usuario no tiene carrito, simplemente actualizar el de la sesión
             ShoppingCart cartToTransfer = sessionCart.get();
             cartToTransfer.setUsuarioId(userId);
-            cartToTransfer.setSessionId(null);  // Ya no necesitamos el sessionId
+            cartToTransfer.setSessionId(null);
             return ResponseEntity.ok(shoppingCartRepository.save(cartToTransfer));
         }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<ShoppingCart> createNewCart(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String sessionId) {
+        
+        if (userId == null && sessionId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        ShoppingCart newCart;
+        if (userId != null) {
+            Optional<ShoppingCart> existingCart = shoppingCartRepository.findByUsuarioId(userId);
+            if (existingCart.isPresent()) {
+                return ResponseEntity.ok(existingCart.get());
+            }
+            newCart = new ShoppingCart(null, userId);
+        } else {
+            Optional<ShoppingCart> existingCart = shoppingCartRepository.findBySessionId(sessionId);
+            if (existingCart.isPresent()) {
+                return ResponseEntity.ok(existingCart.get());
+            }
+            newCart = new ShoppingCart(sessionId, null);
+        }
+        
+        return ResponseEntity.ok(shoppingCartRepository.save(newCart));
     }
 }

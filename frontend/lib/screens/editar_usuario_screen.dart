@@ -11,7 +11,7 @@ class EditarUsuarioScreen extends StatefulWidget {
   const EditarUsuarioScreen({super.key, required this.usuario});
 
   @override
-  _EditarUsuarioScreenState createState() => _EditarUsuarioScreenState();
+  State<EditarUsuarioScreen> createState() => _EditarUsuarioScreenState();
 }
 
 class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
@@ -36,7 +36,6 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
 
   void _guardarCambios() {
     if (_formKey.currentState!.validate()) {
-      // Crear una copia del usuario para actualizarlo
       final usuarioActualizado = Usuario(
         id: widget.usuario.id,
         trato: widget.usuario.trato,
@@ -49,23 +48,18 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
         esAdmin: widget.usuario.esAdmin,
       );
 
-      // Actualizar en el provider
       final usuarioProvider =
           Provider.of<UsuarioProvider>(context, listen: false);
 
-      // Obtener el ID como entero
       int userId = 0;
       try {
         userId = int.parse(widget.usuario.id ?? "0");
       } catch (e) {
-        print('Error al parsear ID de usuario: $e');
-        // Intentar extraer números del nombre de usuario como fallback
         String numericString =
             widget.usuario.usuario.replaceAll(RegExp(r'[^0-9]'), '');
         userId = numericString.isEmpty ? 0 : int.parse(numericString);
       }
 
-      print('Guardando cambios para usuario con ID: $userId');
       usuarioProvider
           .actualizarUsuario(usuarioActualizado, userId)
           .then((success) {
@@ -119,7 +113,12 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Constants.primaryColor.withOpacity(0.3),
+                        color: Constants.primaryColor.withValues(
+                          red: Constants.primaryColor.r.toDouble(),
+                          green: Constants.primaryColor.g.toDouble(),
+                          blue: Constants.primaryColor.b.toDouble(),
+                          alpha: (0.3 * 255).toDouble(),
+                        ),
                         shape: BoxShape.circle,
                       ),
                       child: widget.usuario.imagen.isEmpty

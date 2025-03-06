@@ -3,10 +3,10 @@ package com.wabizone.ecommerce.models;
 public class CartItem {
     
     private Long productoId;
-    private String nombre;         // Copia del nombre para evitar joins innecesarios
+    private String nombre;
     private Integer cantidad;
-    private Double precio;         // Precio en el momento de añadir
-    private String opciones;       // JSON con opciones seleccionadas (color, tamaño, etc.)
+    private Double precio;
+    private String opciones;
     
     public CartItem() {}
     
@@ -25,7 +25,6 @@ public class CartItem {
         this.opciones = opciones;
     }
     
-    // Getters y Setters
     public Long getProductoId() {
         return productoId;
     }
@@ -65,4 +64,4 @@ public class CartItem {
     public void setOpciones(String opciones) {
         this.opciones = opciones;
     }
-} 
+}

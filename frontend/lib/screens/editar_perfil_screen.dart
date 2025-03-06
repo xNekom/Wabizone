@@ -18,10 +18,13 @@ class EditarPerfilScreen extends StatefulWidget {
 
 class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _usuarioController;
-  late TextEditingController _tratoController;
-  late TextEditingController _edadController;
-  late TextEditingController _lugarNacimientoController;
+  final TextEditingController _usuarioController = TextEditingController();
+  final TextEditingController _tratoController = TextEditingController();
+  final TextEditingController _edadController = TextEditingController();
+  final TextEditingController _lugarNacimientoController =
+      TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _telefonoController = TextEditingController();
   String? _imagenBase64;
   bool _isLoading = false;
   String? _errorMessage;
@@ -29,12 +32,12 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   @override
   void initState() {
     super.initState();
-    _usuarioController = TextEditingController(text: widget.usuario.usuario);
-    _tratoController = TextEditingController(text: widget.usuario.trato);
-    _edadController =
-        TextEditingController(text: widget.usuario.edad.toString());
-    _lugarNacimientoController =
-        TextEditingController(text: widget.usuario.lugarNacimiento);
+    _usuarioController.text = widget.usuario.usuario;
+    _tratoController.text = widget.usuario.trato;
+    _edadController.text = widget.usuario.edad.toString();
+    _lugarNacimientoController.text = widget.usuario.lugarNacimiento;
+    _emailController.text = widget.usuario.email ?? '';
+    _telefonoController.text = widget.usuario.telefono ?? '';
   }
 
   @override
@@ -43,6 +46,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     _tratoController.dispose();
     _edadController.dispose();
     _lugarNacimientoController.dispose();
+    _emailController.dispose();
+    _telefonoController.dispose();
     super.dispose();
   }
 
@@ -81,9 +86,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     });
 
     try {
-      // Verificar si el nombre de usuario ha cambiado
       if (_usuarioController.text != widget.usuario.usuario) {
-        // Verificar si el nuevo nombre de usuario ya existe
         final usuarioExistente = await UsuarioService.buscarUsuarioPorNombre(
             _usuarioController.text);
         if (usuarioExistente != null) {
@@ -95,25 +98,25 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         }
       }
 
-      // Crear una copia del usuario con los nuevos datos
       final usuarioActualizado = Usuario(
         id: widget.usuario.id,
-        trato: _tratoController.text,
         imagen: _imagenBase64 ?? widget.usuario.imagen,
+        trato: _tratoController.text,
         edad: int.tryParse(_edadController.text) ?? widget.usuario.edad,
         usuario: _usuarioController.text,
         contrasena: widget.usuario.contrasena,
         lugarNacimiento: _lugarNacimientoController.text,
         bloqueado: widget.usuario.bloqueado,
         esAdmin: widget.usuario.esAdmin,
+        email: _emailController.text.isEmpty ? null : _emailController.text,
+        telefono:
+            _telefonoController.text.isEmpty ? null : _telefonoController.text,
       );
 
-      // Actualizar el usuario en la base de datos
       final success = await UsuarioService.actualizarUsuario(
           usuarioActualizado, int.parse(widget.usuario.id ?? '0'));
 
       if (success) {
-        // Actualizar el usuario en el provider
         if (context.mounted) {
           final authProvider =
               Provider.of<AuthProvider>(context, listen: false);
@@ -160,7 +163,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Avatar con opción para cambiar
                     GestureDetector(
                       onTap: _selectImage,
                       child: Stack(
@@ -172,8 +174,12 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                                     _imagenBase64!))
                                 : ImageUtils.getImageProvider(
                                     widget.usuario.imagen),
-                            backgroundColor:
-                                Constants.primaryColor.withOpacity(0.2),
+                            backgroundColor: Constants.primaryColor.withValues(
+                              red: Constants.primaryColor.r.toDouble(),
+                              green: Constants.primaryColor.g.toDouble(),
+                              blue: Constants.primaryColor.b.toDouble(),
+                              alpha: (0.2 * 255).toDouble(),
+                            ),
                           ),
                           Positioned(
                             bottom: 0,
@@ -195,8 +201,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Mostrar mensaje de error si existe
                     if (_errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
@@ -208,8 +212,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                           ),
                         ),
                       ),
-
-                    // Campos de edición
                     CustomTextField(
                       controller: _usuarioController,
                       label: 'Nombre de Usuario',
@@ -225,7 +227,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     CustomTextField(
                       controller: _tratoController,
                       label: 'Trato',
@@ -238,7 +239,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     CustomTextField(
                       controller: _edadController,
                       label: 'Edad',
@@ -256,7 +256,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     CustomTextField(
                       controller: _lugarNacimientoController,
                       label: 'Lugar de Nacimiento',
@@ -268,9 +267,41 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          if (!value.contains('@') || !value.contains('.')) {
+                            return 'Ingrese un email válido';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _telefonoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono',
+                        prefixIcon: Icon(Icons.phone),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          if (value.length < 9) {
+                            return 'Ingrese un número de teléfono válido';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 24),
-
-                    // Botón para guardar cambios
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

@@ -15,12 +15,11 @@ class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key, required this.usuario});
 
   @override
-  _AdminHomeScreenState createState() => _AdminHomeScreenState();
+  State<AdminHomeScreen> createState() => _AdminHomeScreenState();
 }
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
   void _cerrarSesion() {
-    // Llama a logout del provider para limpiar el estado
     Provider.of<UsuarioProvider>(context, listen: false).logout();
 
     Navigator.pushAndRemoveUntil(

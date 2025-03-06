@@ -1,32 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-// Screens
 import 'screens/login_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/checkout_screen.dart';
 import 'screens/admin_home_screen.dart';
 import 'screens/home_screen.dart';
-
-// Utils
 import 'utils/constants_utils.dart';
-
-// Providers
 import 'providers/usuario_provider.dart';
 import 'providers/producto_provider.dart';
 import 'providers/pedido_provider.dart';
 import 'providers/carrito_provider.dart';
-
-// Services
+import 'providers/auth_provider.dart';
 import 'services/service_locator.dart';
 
 void main() {
-  // Asegurar que Flutter esté inicializado
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inicializar el service locator (crea las dependencias)
   ServiceLocator();
-
   runApp(const MyApp());
 }
 
@@ -35,7 +24,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Configurar MultiProvider para inyectar todos los providers
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<UsuarioProvider>(
@@ -49,6 +37,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<CarritoProvider>(
           create: (_) => CarritoProvider(),
+        ),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => AuthProvider(),
         ),
       ],
       child: MaterialApp(
@@ -73,7 +64,6 @@ class MyApp extends StatelessWidget {
           '/cart': (context) => const CartScreen(),
           '/checkout': (context) => const CheckoutScreen(),
           '/home': (context) {
-            // Verificar si hay un usuario logueado
             final usuarioProvider =
                 Provider.of<UsuarioProvider>(context, listen: false);
             if (usuarioProvider.usuarioActual != null) {
@@ -83,7 +73,6 @@ class MyApp extends StatelessWidget {
                 return HomeScreen(usuario: usuarioProvider.usuarioActual!);
               }
             } else {
-              // Si no hay usuario, redirigir al login
               return const LoginScreen();
             }
           },

@@ -11,7 +11,6 @@ import com.wabizone.ecommerce.models.User;
 import com.wabizone.ecommerce.repository.PedidoRepository;
 import com.wabizone.ecommerce.repository.UserRepository;
 
-//Plantear aqui toda la logica de negocio ademas del crud llamar a todos los metodos que haran cosas adicionales cuando se haga algo del CRUD, o no
 @Service
 public class PedidoService {
 
@@ -26,7 +25,6 @@ public class PedidoService {
     public Pedido createPedido(PedidoCreationRequest pedidoCreationRequest) {
         Pedido pedido = mapToPedido(pedidoCreationRequest);
         
-        // Si tenemos el ID del usuario pero no su nombre, lo buscamos
         if (pedido.getUsuarioId() != null && (pedido.getNombreUsuario() == null || pedido.getNombreUsuario().isEmpty())) {
             Optional<User> user = userRepository.findById(pedido.getUsuarioId());
             user.ifPresent(u -> pedido.setNombreUsuario(u.getNombre()));
@@ -63,7 +61,6 @@ public class PedidoService {
 
     public List<Pedido> getAllPedidos() {
         List<Pedido> pedidos = pedidoRepository.findAll();
-        // Asegurarnos de que todos los pedidos tengan el nombre del usuario
         pedidos.forEach(this::completarInformacionUsuario);
         return pedidos;
     }
@@ -86,7 +83,6 @@ public class PedidoService {
             pedido.setEmail(pedidoUpdateRequest.email());
             pedido.setComentarios(pedidoUpdateRequest.comentarios());
             
-            // Asegurarnos de que tengamos el nombre del usuario
             completarInformacionUsuario(pedido);
             
             return pedidoRepository.save(pedido);
@@ -100,7 +96,6 @@ public class PedidoService {
         pedidos = pedidos.stream()
                 .filter(pedido -> pedido.getEstadoPedido().equals(estado))
                 .toList();
-        // Asegurarnos de que todos los pedidos tengan el nombre del usuario
         pedidos.forEach(this::completarInformacionUsuario);
         return pedidos;
     }
@@ -112,4 +107,3 @@ public class PedidoService {
         }
     }
 }
-

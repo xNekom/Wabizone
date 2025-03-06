@@ -13,14 +13,13 @@ class GestionProductosScreen extends StatefulWidget {
   const GestionProductosScreen({super.key});
 
   @override
-  _GestionProductosScreenState createState() => _GestionProductosScreenState();
+  State<GestionProductosScreen> createState() => _GestionProductosScreenState();
 }
 
 class _GestionProductosScreenState extends State<GestionProductosScreen> {
   @override
   void initState() {
     super.initState();
-    // Cargar productos al iniciar la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProductoProvider>(context, listen: false)
           .obtenerTodosProductos();
@@ -82,7 +81,12 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Constants.primaryColor.withOpacity(0.3),
+                            color: Constants.primaryColor.withValues(
+                              red: Constants.primaryColor.r.toDouble(),
+                              green: Constants.primaryColor.g.toDouble(),
+                              blue: Constants.primaryColor.b.toDouble(),
+                              alpha: (0.3 * 255).toDouble(),
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: (imagenPath == null || imagenPath!.isEmpty)
@@ -96,8 +100,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                                     height: 120,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      print(
-                                          'Error al cargar imagen en diálogo de producto: $error');
                                       return Icon(Icons.broken_image,
                                           size: 80,
                                           color: Constants.primaryColor);
@@ -152,11 +154,9 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     return;
                   }
 
-                  // Mostrar spinner de carga
                   DialogUtils.showLoadingSpinner(dialogContext);
 
                   try {
-                    // Generar un ID único para el producto
                     String customId = "p${Random().nextInt(10000)}";
                     Producto nuevoProducto = Producto(
                       id: customId,
@@ -175,10 +175,8 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     bool success =
                         await productoProvider.crearProducto(nuevoProducto);
 
-                    // Cerrar diálogo de carga y creación
-                    Navigator.of(dialogContext).pop(); // Cerrar el spinner
-                    Navigator.of(dialogContext)
-                        .pop(); // Cerrar el diálogo de creación
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(dialogContext).pop();
 
                     if (success) {
                       DialogUtils.showSnackBar(
@@ -189,7 +187,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           color: Constants.errorColor);
                     }
                   } catch (e) {
-                    // Cerrar diálogo de carga en caso de error
                     Navigator.of(dialogContext).pop();
                     DialogUtils.showSnackBar(
                         context, "Error al crear el producto: $e",
@@ -269,7 +266,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
   }
 
   void _editarProducto(Producto producto) {
-    // Primero verificamos si el producto existe
     final productoProvider =
         Provider.of<ProductoProvider>(context, listen: false);
 
@@ -278,20 +274,18 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
     productoProvider
         .obtenerProductoPorId(producto.id)
         .then((productoExistente) {
-      Navigator.of(context).pop(); // Cerrar spinner
+      Navigator.of(context).pop();
 
       if (productoExistente == null) {
-        // El producto no existe
         DialogUtils.showSnackBar(context,
             "No se encontró el producto con ID ${producto.id}. No se puede editar.",
             color: Constants.errorColor);
         return;
       }
 
-      // Si el producto existe, continuamos con la edición
       _mostrarDialogoEdicion(producto);
     }).catchError((error) {
-      Navigator.of(context).pop(); // Cerrar spinner
+      Navigator.of(context).pop();
       DialogUtils.showSnackBar(
           context, "Error al verificar si el producto existe: $error",
           color: Constants.errorColor);
@@ -357,7 +351,12 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Constants.primaryColor.withOpacity(0.3),
+                            color: Constants.primaryColor.withValues(
+                              red: Constants.primaryColor.r.toDouble(),
+                              green: Constants.primaryColor.g.toDouble(),
+                              blue: Constants.primaryColor.b.toDouble(),
+                              alpha: (0.3 * 255).toDouble(),
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: (imagenPath == null || imagenPath!.isEmpty)
@@ -371,8 +370,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                                     height: 120,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      print(
-                                          'Error al cargar imagen en diálogo de producto: $error');
                                       return Icon(Icons.broken_image,
                                           size: 80,
                                           color: Constants.primaryColor);
@@ -427,7 +424,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     return;
                   }
 
-                  // Mostrar spinner de carga
                   DialogUtils.showLoadingSpinner(dialogContext);
 
                   try {
@@ -444,55 +440,39 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                     final productoProvider =
                         Provider.of<ProductoProvider>(context, listen: false);
 
-                    // Extraer el ID numérico del producto
                     int productId = 0;
                     try {
-                      print(
-                          'Extrayendo ID numérico para producto: ${producto.id}');
                       if (producto.id.startsWith("p")) {
-                        // Intenta extraer un número de la parte "p1234" del ID
                         String numberPart =
                             producto.id.replaceAll(RegExp(r'[^0-9]'), '');
-                        print('Parte numérica extraída: $numberPart');
 
                         if (numberPart.isNotEmpty) {
                           productId = int.parse(numberPart);
                         } else {
-                          print(
-                              'No se pudo extraer parte numérica del ID ${producto.id}');
                           productId = 0;
                         }
                       } else {
-                        // Intenta convertir todo el ID a entero
                         try {
                           productId = int.parse(producto.id);
                         } catch (parseError) {
-                          print(
-                              'No se pudo convertir ${producto.id} a entero: $parseError');
                           productId = 0;
                         }
                       }
-                      print('ID numérico extraído: $productId');
                     } catch (e) {
-                      // En caso de error, usa 0 como fallback
-                      print('Error al extraer ID numérico: $e');
                       productId = 0;
                     }
 
                     bool success = await productoProvider.actualizarProducto(
                         productoActualizado, productId);
 
-                    // Cerrar diálogo de carga y edición
-                    Navigator.of(dialogContext).pop(); // Cerrar el spinner
-                    Navigator.of(dialogContext)
-                        .pop(); // Cerrar el diálogo de edición
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(dialogContext).pop();
 
                     if (success) {
                       DialogUtils.showSnackBar(
                           context, "Producto actualizado correctamente",
                           color: Constants.successColor);
                     } else {
-                      // Mensaje más descriptivo basado en el error
                       String errorMsg = productoProvider.error;
                       if (errorMsg.contains('producto_no_encontrado')) {
                         errorMsg =
@@ -506,7 +486,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           color: Constants.errorColor);
                     }
                   } catch (e) {
-                    // Cerrar diálogo de carga en caso de error
                     Navigator.of(dialogContext).pop();
                     DialogUtils.showSnackBar(
                         context, "Error al actualizar el producto: $e",
@@ -537,7 +516,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
             ),
             TextButton(
               onPressed: () async {
-                // Mostrar spinner de carga
                 DialogUtils.showLoadingSpinner(dialogContext);
 
                 try {
@@ -547,10 +525,8 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                   bool success =
                       await productoProvider.eliminarProducto(producto.id);
 
-                  // Cerrar diálogos
-                  Navigator.of(dialogContext).pop(); // Cerrar el spinner
-                  Navigator.of(dialogContext)
-                      .pop(); // Cerrar el diálogo de confirmación
+                  Navigator.of(dialogContext).pop();
+                  Navigator.of(dialogContext).pop();
 
                   if (success) {
                     DialogUtils.showSnackBar(
@@ -561,7 +537,6 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                         color: Constants.errorColor);
                   }
                 } catch (e) {
-                  // Cerrar diálogo de carga en caso de error
                   Navigator.of(dialogContext).pop();
                   DialogUtils.showSnackBar(
                       context, "Error al eliminar el producto: $e",

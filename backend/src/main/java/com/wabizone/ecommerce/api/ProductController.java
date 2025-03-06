@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.wabizone.ecommerce.api.request.ProductCreationRequest;
@@ -82,11 +81,9 @@ public class ProductController {
     @PutMapping("/custom/{customId}")
     public ResponseEntity<Product> updateProductByCustomId(@PathVariable String customId, @RequestBody ProductCreationRequest productUpdateRequest) {
         try {
-            // Primero buscamos el producto por su customId
             Optional<Product> existingProduct = productService.findProductByCustomId(customId);
             
             if (existingProduct.isPresent()) {
-                // Si existe, actualizamos usando su ID numérico
                 Product updatedProduct = productService.updateProduct(existingProduct.get().getId(), productUpdateRequest);
                 return ResponseEntity.ok(updatedProduct);
             } else {

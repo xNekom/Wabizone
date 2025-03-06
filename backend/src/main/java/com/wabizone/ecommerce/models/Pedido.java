@@ -8,8 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-
-//Modelo objeto relacionandolo con la tabla 
 @Entity
 @Table(name = "Pedido")
 public class Pedido {
@@ -59,7 +57,6 @@ public class Pedido {
     public Pedido() {
     }
 
-    //Generado en source actions solo el id de la tabla para comprobar
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -115,7 +112,6 @@ public class Pedido {
         this.precioTotal = precioTotal;
     }
 
-    // Getters y setters para campos de usuario
     public Long getUsuarioId() {
         return usuarioId;
     }
@@ -132,7 +128,6 @@ public class Pedido {
         this.nombreUsuario = nombreUsuario;
     }
 
-    // Getters y setters para campos de envío
     public String getNombreCompleto() {
         return nombreCompleto;
     }

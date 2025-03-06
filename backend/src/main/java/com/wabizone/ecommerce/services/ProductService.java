@@ -1,6 +1,5 @@
 package com.wabizone.ecommerce.services;
 
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,22 +10,20 @@ import com.wabizone.ecommerce.api.request.ProductCreationRequest;
 import com.wabizone.ecommerce.models.Product;
 import com.wabizone.ecommerce.repository.ProductRepository;
 
-
-//Plantear aqui toda la logica de negocio ademas del crud llamar a todos los metodos que haran cosas adicionales cuando se haga algo del CRUD, o no
 @Service
 public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public ProductService (ProductRepository productRepository){
+    public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
-    public Product createProduct (ProductCreationRequest productCreationRequest){
+    public Product createProduct(ProductCreationRequest productCreationRequest) {
         return productRepository.save(mapToProduct(productCreationRequest));
     }
 
-    private Product mapToProduct (ProductCreationRequest createRequest){
+    private Product mapToProduct(ProductCreationRequest createRequest) {
         Product product = new Product();
         String customId = createRequest.customId();
         if (customId == null || customId.isEmpty()) {
@@ -41,23 +38,20 @@ public class ProductService {
         return product;
     }
 
-    public void removeProduct (Long id){
+    public void removeProduct(Long id) {
         productRepository.deleteById(id);
     }
 
-    public Optional<Product> getProduct (final long id){
+    public Optional<Product> getProduct(final long id) {
         return productRepository.findById(id);
     }
 
-    public List<Product> getAllProducts(){
+    public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
     
     public Optional<Product> findProductByCustomId(String customId) {
-        List<Product> products = productRepository.findAll();
-        return products.stream()
-                .filter(product -> product.getCustomId().equals(customId))
-                .findFirst();
+        return productRepository.findByCustomId(customId);
     }
     
     public Product updateProduct(Long id, ProductCreationRequest productUpdateRequest) {

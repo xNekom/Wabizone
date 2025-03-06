@@ -69,17 +69,26 @@ class _PerfilScreenState extends State<PerfilScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar del usuario
               _usuario!.imagen.isNotEmpty
                   ? CircleAvatar(
                       radius: 75,
                       backgroundImage:
                           ImageUtils.getImageProvider(_usuario!.imagen),
-                      backgroundColor: Constants.primaryColor.withOpacity(0.2),
+                      backgroundColor: Constants.primaryColor.withValues(
+                        red: Constants.primaryColor.r.toDouble(),
+                        green: Constants.primaryColor.g.toDouble(),
+                        blue: Constants.primaryColor.b.toDouble(),
+                        alpha: (0.2 * 255).toDouble(),
+                      ),
                     )
                   : CircleAvatar(
                       radius: 75,
-                      backgroundColor: Constants.primaryColor.withOpacity(0.2),
+                      backgroundColor: Constants.primaryColor.withValues(
+                        red: Constants.primaryColor.r.toDouble(),
+                        green: Constants.primaryColor.g.toDouble(),
+                        blue: Constants.primaryColor.b.toDouble(),
+                        alpha: (0.2 * 255).toDouble(),
+                      ),
                       child: Icon(
                         Icons.person,
                         size: 80,
@@ -87,8 +96,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       ),
                     ),
               const SizedBox(height: 16),
-
-              // Nombre de usuario con badge de admin si aplica
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -104,8 +111,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Información del usuario
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -128,10 +133,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Botón para editar perfil
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

@@ -13,23 +13,18 @@ class GestionUsuariosScreen extends StatefulWidget {
   const GestionUsuariosScreen({super.key, required this.adminActual});
 
   @override
-  _GestionUsuariosScreenState createState() => _GestionUsuariosScreenState();
+  State<GestionUsuariosScreen> createState() => _GestionUsuariosScreenState();
 }
 
 class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
-  final _formKey = GlobalKey<FormState>();
-  late Future<List<Usuario>> _usuariosFuture;
-  bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
-    _cargarUsuarios();
   }
 
   Future<void> _cargarUsuarios() async {
     setState(() {
-      _usuariosFuture = UsuarioService.obtenerTodosUsuarios();
+      // Forzar recarga de la pantalla
     });
   }
 
@@ -88,11 +83,9 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                   if (dialogFormKey.currentState!.validate()) {
                     final BuildContext dialogContext = context;
 
-                    // Mostrar spinner de carga
                     DialogUtils.showLoadingSpinner(dialogContext);
 
                     try {
-                      // Crear un nuevo objeto Usuario
                       Usuario nuevoUsuario = Usuario(
                         trato: selectedTrato,
                         imagen:
@@ -108,28 +101,22 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       Map<String, dynamic> resultado =
                           await UsuarioService.agregarUsuario(nuevoUsuario);
 
-                      // Cerrar el spinner
                       if (dialogContext.mounted) {
                         Navigator.of(dialogContext).pop();
                       }
 
                       if (resultado['success']) {
-                        // Cerrar diálogo de creación
                         Navigator.of(dialogContext).pop();
 
-                        // Mostrar mensaje de éxito
                         DialogUtils.showSnackBar(context, resultado['message'],
                             color: Constants.successColor);
 
-                        // Recargar usuarios
                         _cargarUsuarios();
                       } else {
-                        // Mostrar mensaje de error pero mantener el diálogo abierto
                         DialogUtils.showSnackBar(context, resultado['message'],
                             color: Constants.errorColor);
                       }
                     } catch (e) {
-                      // Cerrar spinner en caso de error
                       if (dialogContext.mounted) {
                         Navigator.of(dialogContext).pop();
                       }
@@ -151,8 +138,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   }
 
   void _editarUsuario(Usuario usuario) async {
-    final dialogFormKey =
-        GlobalKey<FormState>(); // Nuevo formKey específico para el diálogo
+    final dialogFormKey = GlobalKey<FormState>();
     TextEditingController usuarioController =
         TextEditingController(text: usuario.usuario);
     TextEditingController contrasenaController =
@@ -160,21 +146,14 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
     TextEditingController edadController =
         TextEditingController(text: usuario.edad.toString());
 
-    // Almacenar el nombre de usuario original para verificar si cambia
     final String usuarioOriginal = usuario.usuario;
 
-    // Asignar valores predeterminados si son nulos o vacíos
     String selectedTrato = usuario.trato.isEmpty ? "Sr." : usuario.trato;
     String? imagenPath = usuario.imagen;
     bool esAdmin = usuario.esAdmin;
     bool bloqueado = usuario.bloqueado;
     String lugarNacimiento =
         usuario.lugarNacimiento.isEmpty ? "Madrid" : usuario.lugarNacimiento;
-
-    print('Editando usuario: ${usuario.usuario}');
-    print('Trato original: "${usuario.trato}", usando: "$selectedTrato"');
-    print(
-        'Lugar nacimiento original: "${usuario.lugarNacimiento}", usando: "$lugarNacimiento"');
 
     showDialog(
       context: context,
@@ -200,7 +179,6 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       setDialogState(() => selectedTrato = value!),
                   onImagenChanged: (value) => setDialogState(() {
                     imagenPath = value;
-                    debugPrint('Nueva imagen seleccionada: $value');
                   }),
                   onAdminChanged: (value) =>
                       setDialogState(() => esAdmin = value!),
@@ -226,7 +204,6 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                     String? errorEdad =
                         ValidationUtils.validateAge(edadController.text);
 
-                    // Verificar si hay errores de validación
                     if (errorContrasena != null) {
                       DialogUtils.showSnackBar(dialogContext, errorContrasena,
                           color: Constants.errorColor);
@@ -238,21 +215,14 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       return;
                     }
 
-                    // Verificar si el nombre de usuario ha cambiado y si ya existe
                     if (usuarioController.text != usuarioOriginal) {
-                      print(
-                          'El nombre de usuario ha cambiado de "$usuarioOriginal" a "${usuarioController.text}"');
-
-                      // Mostrar spinner de carga para la verificación
                       DialogUtils.showLoadingSpinner(dialogContext);
 
                       try {
-                        // Verificar si el nuevo nombre ya existe
                         Usuario? usuarioExistente =
                             await UsuarioService.buscarUsuarioPorNombre(
                                 usuarioController.text);
 
-                        // Cerrar el spinner de verificación
                         if (dialogContext.mounted) {
                           Navigator.of(dialogContext).pop();
                         }
@@ -264,20 +234,12 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                           return;
                         }
                       } catch (e) {
-                        // Si es un 404, significa que el usuario no existe (lo que queremos)
                         if (e.toString().contains('404') ||
                             e.toString().contains('not_found')) {
-                          print(
-                              'Usuario no encontrado (404), lo cual es bueno para la edición');
-                          // Cerrar el spinner para el caso 404 (usuario no existe)
                           if (dialogContext.mounted) {
                             Navigator.of(dialogContext).pop();
                           }
                         } else {
-                          // Error de otro tipo
-                          print(
-                              'Error al verificar disponibilidad del nombre: $e');
-                          // Cerrar el spinner en caso de error
                           if (dialogContext.mounted) {
                             Navigator.of(dialogContext).pop();
                           }
@@ -289,11 +251,9 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                       }
                     }
 
-                    // Mostrar spinner de carga para la actualización
                     DialogUtils.showLoadingSpinner(dialogContext);
 
                     try {
-                      // Crear un nuevo objeto Usuario con los valores actualizados
                       Usuario usuarioActualizado = Usuario(
                         id: usuario.id,
                         trato: selectedTrato,
@@ -307,27 +267,18 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         esAdmin: esAdmin,
                       );
 
-                      // Convertir el ID a entero para la API
                       int userId = 0;
                       try {
                         if (usuario.id != null && usuario.id!.isNotEmpty) {
                           userId = int.parse(usuario.id!);
-                          print(
-                              'ID de usuario parseado correctamente: $userId');
 
-                          // Verificar que el ID sea válido
                           if (userId <= 0) {
-                            print('ID de usuario inválido: $userId');
                             throw Exception('ID de usuario inválido');
                           }
                         } else {
-                          print('ID de usuario es nulo o vacío');
                           throw Exception('ID de usuario es nulo o vacío');
                         }
                       } catch (e) {
-                        print('Error al parsear ID de usuario: $e');
-
-                        // Cerrar el spinner en caso de error
                         if (dialogContext.mounted) {
                           Navigator.of(dialogContext).pop();
                         }
@@ -338,34 +289,26 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         return;
                       }
 
-                      // Asignar el ID al usuario actualizado
                       usuarioActualizado.id = userId.toString();
-                      print(
-                          'ID final asignado al usuario: ${usuarioActualizado.id}');
 
                       bool success = await UsuarioService.actualizarUsuario(
                           usuarioActualizado, userId);
 
-                      // Cerrar el spinner
                       if (dialogContext.mounted) {
                         Navigator.of(dialogContext).pop();
                       }
 
                       if (success) {
-                        // Cerrar diálogo de edición si fue exitoso
                         Navigator.of(dialogContext).pop();
 
-                        // Mostrar mensaje de éxito
                         DialogUtils.showSnackBar(
                           context,
                           "Usuario actualizado correctamente",
                           color: Constants.successColor,
                         );
 
-                        // Recargar los usuarios
                         _cargarUsuarios();
                       } else {
-                        // Mostrar mensaje de error pero mantener el diálogo abierto
                         DialogUtils.showSnackBar(
                           context,
                           "Error al actualizar el usuario. Por favor, verifique que el ID sea válido y que el nombre de usuario no esté duplicado.",
@@ -373,9 +316,8 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                         );
                       }
                     } catch (e) {
-                      // Cerrar diálogo de carga en caso de error
                       if (dialogContext.mounted) {
-                        Navigator.of(dialogContext).pop(); // Cierra el spinner
+                        Navigator.of(dialogContext).pop();
                       }
 
                       String errorMessage = "Error al actualizar usuario";
@@ -410,7 +352,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder<List<Usuario>>(
-        future: _usuariosFuture,
+        future: UsuarioService.obtenerTodosUsuarios(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -483,24 +425,18 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                             color: user.bloqueado ? Colors.red : Colors.green,
                           ),
                           onPressed: () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
                             try {
-                              // Antes de cambiar el estado, buscar el usuario por nombre para obtener su ID
                               Usuario? usuarioActual =
                                   await UsuarioService.buscarUsuarioPorNombre(
                                       user.usuario);
                               if (usuarioActual != null) {
                                 user.bloqueado = !user.bloqueado;
-                                // Obtener el ID del backend (el que devuelve la búsqueda)
                                 int userId =
                                     int.parse(usuarioActual.id.toString());
 
                                 await UsuarioService.actualizarUsuario(
                                     user, userId);
 
-                                // Recargar usuarios para asegurar datos actualizados
                                 await _cargarUsuarios();
 
                                 DialogUtils.showSnackBar(
@@ -519,10 +455,6 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                               DialogUtils.showSnackBar(
                                   context, "Error al actualizar usuario: $e",
                                   color: Constants.errorColor);
-                            } finally {
-                              setState(() {
-                                _isLoading = false;
-                              });
                             }
                           },
                         ),
@@ -538,34 +470,28 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                             if (confirmar == true) {
                               await DialogUtils.showLoadingSpinner(context);
                               try {
-                                // Buscar el usuario por nombre para obtener su ID
                                 Usuario? usuarioActual =
                                     await UsuarioService.buscarUsuarioPorNombre(
                                         user.usuario);
                                 if (usuarioActual != null) {
-                                  // Obtener el ID del backend (el que devuelve la búsqueda)
                                   int userId =
                                       int.parse(usuarioActual.id.toString());
 
                                   await UsuarioService.eliminarUsuario(userId);
 
-                                  // Cerrar el spinner
                                   Navigator.pop(context);
 
-                                  // Recargar usuarios
                                   _cargarUsuarios();
 
                                   DialogUtils.showSnackBar(context,
                                       "Usuario eliminado correctamente",
                                       color: Constants.successColor);
                                 } else {
-                                  // Cerrar el spinner
                                   Navigator.pop(context);
                                   throw Exception(
                                       "No se pudo encontrar el usuario para eliminar");
                                 }
                               } catch (e) {
-                                // Cerrar el spinner en caso de error
                                 if (context.mounted) {
                                   Navigator.pop(context);
                                 }

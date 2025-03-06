@@ -14,7 +14,7 @@ class PedidosPage extends StatefulWidget {
   });
 
   @override
-  _PedidosPageState createState() => _PedidosPageState();
+  State<PedidosPage> createState() => _PedidosPageState();
 }
 
 class _PedidosPageState extends State<PedidosPage> {
@@ -35,8 +35,6 @@ class _PedidosPageState extends State<PedidosPage> {
     });
 
     try {
-      // Obtener todos los pedidos, filtrar por usuario en el frontend
-      // Nota: en un sistema real esto debería hacerse desde el backend
       final allPedidos = await PedidoService.obtenerTodosPedidos();
       setState(() {
         _pedidos = allPedidos;

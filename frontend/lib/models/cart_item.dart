@@ -13,10 +13,8 @@ class CartItem {
     this.opciones,
   });
 
-  // Método para calcular el subtotal del ítem
   double get subtotal => precio * cantidad;
 
-  // Factory method para crear un CartItem desde JSON
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
       productoId: json['productoId'],
@@ -27,7 +25,6 @@ class CartItem {
     );
   }
 
-  // Método para convertir CartItem a JSON
   Map<String, dynamic> toJson() {
     return {
       'productoId': productoId,
@@ -38,7 +35,6 @@ class CartItem {
     };
   }
 
-  // Método para crear una copia de CartItem con nuevos valores
   CartItem copyWith({
     int? productoId,
     String? nombre,

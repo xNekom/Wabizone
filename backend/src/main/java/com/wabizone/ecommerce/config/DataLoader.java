@@ -15,9 +15,7 @@ public class DataLoader {
     @Bean
     public CommandLineRunner initData(ProductRepository productRepository, UserRepository userRepository) {
         return args -> {
-            // Verificar si ya hay datos en la base de datos
             if (productRepository.count() == 0) {
-                // Crear productos de ejemplo
                 Product product1 = new Product();
                 product1.setCustomId("p1");
                 product1.setNombre("Producto 1");
@@ -47,7 +45,6 @@ public class DataLoader {
             }
             
             if (userRepository.count() == 0) {
-                // Crear usuarios de ejemplo
                 User user1 = new User();
                 user1.setNombre("Pedro");
                 user1.setContrasena("Pedro");
@@ -72,4 +69,4 @@ public class DataLoader {
             }
         };
     }
-} 
+}

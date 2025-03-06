@@ -13,7 +13,6 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _usuario != null;
 
-  // Inicializar el provider cargando el usuario desde SharedPreferences
   Future<void> init() async {
     _isLoading = true;
     notifyListeners();
@@ -27,12 +26,10 @@ class AuthProvider extends ChangeNotifier {
       if (usuarioId != null &&
           usuarioNombre != null &&
           usuarioContrasena != null) {
-        // Intentar cargar el usuario desde la API
         final usuario = await UsuarioService.buscarUsuarioPorId(usuarioId);
         if (usuario != null) {
           _usuario = usuario;
         } else {
-          // Si no se puede cargar desde la API, intentar con las credenciales guardadas
           final usuario = await UsuarioService.buscarUsuario(
               usuarioNombre, usuarioContrasena);
           _usuario = usuario;
@@ -46,7 +43,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Iniciar sesión
   Future<bool> login(String usuario, String contrasena) async {
     _isLoading = true;
     _error = null;
@@ -59,11 +55,7 @@ class AuthProvider extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        // Mostrar un SnackBar con el mensaje de error
-        if (_error!.contains("baneado")) {
-          // No hacemos nada especial aquí, solo dejamos que el mensaje de error
-          // se muestre tal como viene de validarUsuario
-        }
+        if (_error!.contains("baneado")) {}
 
         return false;
       }
@@ -79,7 +71,6 @@ class AuthProvider extends ChangeNotifier {
 
       _usuario = usuarioObj;
 
-      // Guardar datos en SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('usuario_id', usuarioObj.id ?? '');
       await prefs.setString('usuario_nombre', usuario);
@@ -96,7 +87,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Cerrar sesión
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
@@ -115,7 +105,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Registrar nuevo usuario
   Future<bool> register(Usuario usuario) async {
     _isLoading = true;
     _error = null;
@@ -124,7 +113,6 @@ class AuthProvider extends ChangeNotifier {
     try {
       final result = await UsuarioService.agregarUsuario(usuario);
       if (result['success'] == true) {
-        // Iniciar sesión automáticamente después del registro
         return await login(usuario.usuario, usuario.contrasena);
       } else {
         _error = result['message'] ?? "Error al registrar usuario";
@@ -140,7 +128,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Actualizar datos del usuario
   void actualizarUsuario(Usuario usuario) {
     _usuario = usuario;
     notifyListeners();

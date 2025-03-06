@@ -12,9 +12,9 @@ public class ShoppingCart {
     
     @Id
     private String id;
-    private String sessionId;      // Para carritos de usuarios no registrados
-    private Long usuarioId;        // Para usuarios registrados (puede ser null)
-    private List<CartItem> items = new ArrayList<>();  // Lista de items en el carrito
+    private String sessionId;
+    private Long usuarioId;
+    private List<CartItem> items = new ArrayList<>();
     private Date ultimaActualizacion = new Date();
     private Double total = 0.0;
     
@@ -25,13 +25,10 @@ public class ShoppingCart {
         this.usuarioId = usuarioId;
     }
     
-    // Métodos para manipular el carrito
     public void addItem(CartItem item) {
-        // Verificar si el producto ya está en el carrito
         for (int i = 0; i < items.size(); i++) {
             CartItem existingItem = items.get(i);
             if (existingItem.getProductoId().equals(item.getProductoId())) {
-                // Si el producto ya está en el carrito, incrementar cantidad
                 existingItem.setCantidad(existingItem.getCantidad() + item.getCantidad());
                 this.recalculateTotal();
                 this.ultimaActualizacion = new Date();
@@ -39,7 +36,6 @@ public class ShoppingCart {
             }
         }
         
-        // Si el producto no está en el carrito, añadirlo
         this.items.add(item);
         this.recalculateTotal();
         this.ultimaActualizacion = new Date();
@@ -75,7 +71,6 @@ public class ShoppingCart {
         }
     }
     
-    // Getters y Setters
     public String getId() {
         return id;
     }

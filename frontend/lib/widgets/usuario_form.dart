@@ -50,12 +50,6 @@ class UsuarioForm extends StatefulWidget {
 class _UsuarioFormState extends State<UsuarioForm> {
   @override
   Widget build(BuildContext context) {
-    print('Renderizando UsuarioForm - isEditing: ${widget.isEditing}');
-    print('Usuario: ${widget.usuarioController.text}');
-    print(
-        'Contraseña: ${widget.contrasenaController.text.isNotEmpty ? '****' : 'vacía'}');
-    print('Edad: ${widget.edadController.text}');
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -67,7 +61,6 @@ class _UsuarioFormState extends State<UsuarioForm> {
           onChanged: widget.onTratoChanged,
           decoration: const InputDecoration(labelText: "Trato"),
           validator: (value) {
-            print('Validando trato: $value');
             return value == null || value.isEmpty
                 ? 'El trato es obligatorio'
                 : null;
@@ -77,7 +70,6 @@ class _UsuarioFormState extends State<UsuarioForm> {
           controller: widget.usuarioController,
           decoration: const InputDecoration(labelText: "Usuario"),
           validator: (value) {
-            print('Validando usuario: $value');
             return ValidationUtils.validateRequired(value);
           },
         ),
@@ -86,7 +78,6 @@ class _UsuarioFormState extends State<UsuarioForm> {
           decoration: const InputDecoration(labelText: "Contraseña"),
           obscureText: true,
           validator: (value) {
-            print('Validando contraseña: $value');
             return ValidationUtils.validatePassword(value);
           },
         ),
@@ -95,7 +86,6 @@ class _UsuarioFormState extends State<UsuarioForm> {
           decoration: const InputDecoration(labelText: "Edad"),
           keyboardType: TextInputType.number,
           validator: (value) {
-            print('Validando edad: $value');
             return ValidationUtils.validateAge(value);
           },
         ),
@@ -150,23 +140,10 @@ class _UsuarioFormState extends State<UsuarioForm> {
             ),
             IconButton(
               onPressed: () async {
-                // Mostrar mensaje informativo sobre el redimensionamiento automático
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Ahora puedes usar imágenes más grandes (hasta 16MB). Las imágenes muy grandes se optimizarán automáticamente.',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    backgroundColor: Colors.blue,
-                    duration: Duration(seconds: 4),
-                  ),
-                );
-
                 String? newPath = await ImageUtils.pickImage();
                 if (newPath != null && mounted) {
                   widget.onImagenChanged(newPath);
                 } else if (newPath == null && mounted) {
-                  // Si la imagen no pudo ser procesada adecuadamente
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -177,7 +154,6 @@ class _UsuarioFormState extends State<UsuarioForm> {
                       duration: Duration(seconds: 3),
                     ),
                   );
-                  // Asignar null para usar la imagen por defecto
                   widget.onImagenChanged(null);
                 }
               },

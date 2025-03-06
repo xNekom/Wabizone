@@ -10,17 +10,31 @@ import '../utils/image_utils.dart';
 import 'checkout_screen.dart';
 import '../utils/format_utils.dart';
 
-class CartPage extends StatelessWidget {
-  const CartPage({Key? key}) : super(key: key);
+class CartPage extends StatefulWidget {
+  const CartPage({super.key});
+
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar productos en initState en lugar de en build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productoProvider =
+          Provider.of<ProductoProvider>(context, listen: false);
+      if (productoProvider.productos.isEmpty) {
+        productoProvider.obtenerTodosProductos();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Asegurarse de que los productos estén cargados
     final productoProvider =
         Provider.of<ProductoProvider>(context, listen: false);
-    if (productoProvider.productos.isEmpty) {
-      productoProvider.obtenerTodosProductos();
-    }
 
     return Consumer<CarritoProvider>(
       builder: (context, carritoProvider, child) {
@@ -41,7 +55,6 @@ class CartPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // Reiniciar el estado del carrito
                     carritoProvider.clearCart();
                   },
                   child: const Text('Intentar nuevamente'),
@@ -88,7 +101,6 @@ class CartPage extends StatelessWidget {
                   ),
                 ),
                 _buildCartSummary(context, carritoProvider),
-                // Añadir espacio para el botón flotante
                 const SizedBox(height: 70),
               ],
             ),
@@ -97,7 +109,6 @@ class CartPage extends StatelessWidget {
               right: 16,
               child: FloatingActionButton.extended(
                 onPressed: () {
-                  // Navegar a la pantalla de checkout
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const CheckoutScreen(),
@@ -130,16 +141,11 @@ class CartPage extends StatelessWidget {
 
   Widget _buildCartItem(BuildContext context, CartItem item,
       CarritoProvider carritoProvider, ProductoProvider productoProvider) {
-    // Encontrar el producto completo por ID para obtener la imagen
     Producto? productoCompleto;
-    String? imagenUrl;
 
-    // Buscar en la lista de productos por el ID del producto
     for (var producto in productoProvider.productos) {
-      // Intentar encontrar el ID numérico del producto
       int? idNum;
       try {
-        // El ID del producto puede ser algo como 'p1', extraer el número
         if (producto.id.startsWith('p')) {
           idNum = int.parse(producto.id.substring(1));
         } else {
@@ -148,30 +154,21 @@ class CartPage extends StatelessWidget {
 
         if (idNum == item.productoId) {
           productoCompleto = producto;
-          imagenUrl = producto.imagen;
-          print(
-              'Producto encontrado en carrito: ${producto.nombre} con ID ${producto.id}');
           break;
         }
       } catch (e) {
-        // Ignorar errores de conversión
         continue;
       }
     }
 
-    // Si no encontramos el producto, crear un producto temporal para mostrar
-    if (productoCompleto == null) {
-      productoCompleto = Producto(
-        id: 'p${item.productoId}',
-        nombre: item.nombre,
-        descripcion: 'Producto en carrito',
-        imagen: 'prod${item.productoId}.png',
-        stock: 0,
-        precio: item.precio,
-      );
-      print(
-          'Creando producto temporal para el carrito: ID p${item.productoId}');
-    }
+    productoCompleto ??= Producto(
+      id: 'p${item.productoId}',
+      nombre: item.nombre,
+      descripcion: 'Producto en carrito',
+      imagen: 'prod${item.productoId}.png',
+      stock: 0,
+      precio: item.precio,
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -180,7 +177,6 @@ class CartPage extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen del producto utilizando ImageUtils
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -264,14 +260,11 @@ class CartPage extends StatelessWidget {
   }
 
   Widget _buildCartItemImage(int productoId, Producto? producto) {
-    // Si tenemos un producto completo, usar su imagen
     if (producto != null) {
       return Image(
         image: _getCartProductImage(producto),
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          print(
-              'Error cargando imagen para producto $productoId en carrito: $error');
           return Container(
             color: Colors.grey[300],
             child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
@@ -280,7 +273,6 @@ class CartPage extends StatelessWidget {
       );
     }
 
-    // Si no tenemos producto, mostrar icono de imagen rota
     return Container(
       color: Colors.grey[300],
       child: const Icon(Icons.inventory_2, size: 40, color: Colors.grey),
@@ -288,28 +280,23 @@ class CartPage extends StatelessWidget {
   }
 
   ImageProvider _getCartProductImage(Producto producto) {
-    print(
-        'Intentando cargar imagen para ${producto.nombre} (ID: ${producto.id})');
-
-    // Para productos específicos que sabemos que tienen problemas
-    if (producto.id == 'p1' || producto.nombre.contains('Producto 1')) {
-      print('CartScreen: Usando imagen específica para Producto 1');
-      return const AssetImage('assets/imagenes/prod1.png');
-    }
-
-    if (producto.id == 'p4' || producto.nombre.contains('Producto 4')) {
-      print('CartScreen: Usando imagen específica para Producto 4');
+    // Caso especial para Producto 4
+    if (producto.id == 'p4' ||
+        producto.id == '4' ||
+        producto.nombre.contains('Producto 4') ||
+        producto.imagen.contains('prod4')) {
       return const AssetImage('assets/imagenes/prod4.png');
     }
 
-    // Para cualquier otro producto con ID numérico
+    if (producto.id == 'p1' || producto.nombre.contains('Producto 1')) {
+      return const AssetImage('assets/imagenes/prod1.png');
+    }
+
     if (producto.id.startsWith('p')) {
       final idNum = producto.id.substring(1);
-      print('CartScreen: Intentando cargar imagen por ID: prod$idNum.png');
       return AssetImage('assets/imagenes/prod$idNum.png');
     }
 
-    // Para otros casos, usar el ImageUtils
     return ImageUtils.getImageProvider(producto.imagen);
   }
 
@@ -321,7 +308,8 @@ class CartPage extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey
+                .withValues(red: 128, green: 128, blue: 128, alpha: 0.3 * 255),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, -2),
@@ -447,9 +435,8 @@ class CartPage extends StatelessWidget {
   }
 }
 
-// Mantener la clase CartScreen para compatibilidad
 class CartScreen extends StatelessWidget {
-  const CartScreen({Key? key}) : super(key: key);
+  const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
