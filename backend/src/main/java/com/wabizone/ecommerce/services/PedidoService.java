@@ -10,10 +10,13 @@ import com.wabizone.ecommerce.models.Pedido;
 import com.wabizone.ecommerce.models.User;
 import com.wabizone.ecommerce.repository.PedidoRepository;
 import com.wabizone.ecommerce.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class PedidoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PedidoService.class);
     private final PedidoRepository pedidoRepository;
     private final UserRepository userRepository;
 
@@ -23,14 +26,18 @@ public class PedidoService {
     }
 
     public Pedido createPedido(PedidoCreationRequest pedidoCreationRequest) {
+        logger.info("Creating new pedido with number: {}", pedidoCreationRequest.nPedido());
         Pedido pedido = mapToPedido(pedidoCreationRequest);
         
         if (pedido.getUsuarioId() != null && (pedido.getNombreUsuario() == null || pedido.getNombreUsuario().isEmpty())) {
+            logger.debug("Completing user information for pedido");
             Optional<User> user = userRepository.findById(pedido.getUsuarioId());
             user.ifPresent(u -> pedido.setNombreUsuario(u.getNombre()));
         }
         
-        return pedidoRepository.save(pedido);
+        Pedido savedPedido = pedidoRepository.save(pedido);
+        logger.info("Pedido created successfully with ID: {}", savedPedido.getId());
+        return savedPedido;
     }
 
     private Pedido mapToPedido(PedidoCreationRequest createRequest) {
@@ -52,20 +59,26 @@ public class PedidoService {
     }
 
     public void removePedido(Long id) {
+        logger.info("Removing pedido with ID: {}", id);
         pedidoRepository.deleteById(id);
+        logger.info("Pedido removed successfully");
     }
 
     public Optional<Pedido> getPedido(final long id) {
+        logger.debug("Fetching pedido with ID: {}", id);
         return pedidoRepository.findById(id);
     }
 
     public List<Pedido> getAllPedidos() {
+        logger.debug("Fetching all pedidos");
         List<Pedido> pedidos = pedidoRepository.findAll();
         pedidos.forEach(this::completarInformacionUsuario);
+        logger.debug("Retrieved {} pedidos", pedidos.size());
         return pedidos;
     }
     
     public Pedido updatePedido(Long id, PedidoCreationRequest pedidoUpdateRequest) {
+        logger.info("Updating pedido with ID: {}", id);
         Optional<Pedido> existingPedido = pedidoRepository.findById(id);
         if (existingPedido.isPresent()) {
             Pedido pedido = existingPedido.get();
@@ -85,23 +98,29 @@ public class PedidoService {
             
             completarInformacionUsuario(pedido);
             
-            return pedidoRepository.save(pedido);
+            Pedido updatedPedido = pedidoRepository.save(pedido);
+            logger.info("Pedido updated successfully");
+            return updatedPedido;
         } else {
+            logger.error("Pedido with ID {} not found", id);
             throw new RuntimeException("Pedido con id " + id + " no encontrado");
         }
     }
     
     public List<Pedido> getPedidosByEstado(String estado) {
+        logger.debug("Fetching pedidos with estado: {}", estado);
         List<Pedido> pedidos = pedidoRepository.findAll();
         pedidos = pedidos.stream()
                 .filter(pedido -> pedido.getEstadoPedido().equals(estado))
                 .toList();
         pedidos.forEach(this::completarInformacionUsuario);
+        logger.debug("Retrieved {} pedidos with estado: {}", pedidos.size(), estado);
         return pedidos;
     }
 
     private void completarInformacionUsuario(Pedido pedido) {
         if (pedido.getUsuarioId() != null && (pedido.getNombreUsuario() == null || pedido.getNombreUsuario().isEmpty())) {
+            logger.debug("Completing user information for pedido ID: {}", pedido.getId());
             Optional<User> user = userRepository.findById(pedido.getUsuarioId());
             user.ifPresent(u -> pedido.setNombreUsuario(u.getNombre()));
         }

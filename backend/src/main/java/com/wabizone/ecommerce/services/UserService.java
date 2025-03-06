@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service;
 import com.wabizone.ecommerce.api.request.UserCreationRequest;
 import com.wabizone.ecommerce.models.User;
 import com.wabizone.ecommerce.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserService {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -19,7 +21,10 @@ public class UserService {
     }
 
     public User createUser(UserCreationRequest userCreationRequest) {
-        return userRepository.save(mapToUser(userCreationRequest));
+        logger.info("Creating new user with name: {}", userCreationRequest.nombre());
+        User user = userRepository.save(mapToUser(userCreationRequest));
+        logger.info("User created successfully with ID: {}", user.getId());
+        return user;
     }
 
     private User mapToUser(UserCreationRequest createRequest) {
@@ -36,7 +41,9 @@ public class UserService {
     }
 
     public void removeUser(Long id) {
+        logger.info("Removing user with ID: {}", id);
         userRepository.deleteById(id);
+        logger.info("User removed successfully");
     }
 
     public Optional<User> getUser(final long id) {
@@ -48,7 +55,14 @@ public class UserService {
     }
     
     public Optional<User> authenticateUser(String nombre, String contrasena) {
-        return userRepository.findByNombreAndContrasena(nombre, contrasena);
+        logger.info("Attempting to authenticate user: {}", nombre);
+        Optional<User> user = userRepository.findByNombreAndContrasena(nombre, contrasena);
+        if (user.isPresent()) {
+            logger.info("User {} authenticated successfully", nombre);
+        } else {
+            logger.warn("Authentication failed for user: {}", nombre);
+        }
+        return user;
     }
     
     public Optional<User> findUserByNombre(String nombre) {
@@ -56,6 +70,7 @@ public class UserService {
     }
     
     public User updateUser(Long id, UserCreationRequest userUpdateRequest) {
+        logger.info("Updating user with ID: {}", id);
         Optional<User> existingUser = userRepository.findById(id);
         if (existingUser.isPresent()) {
             User user = existingUser.get();
@@ -67,8 +82,11 @@ public class UserService {
             user.setImagen(userUpdateRequest.imagen());
             user.setLugarNacimiento(userUpdateRequest.lugarNacimiento());
             user.setBloqueado(userUpdateRequest.bloqueado());
-            return userRepository.save(user);
+            User updatedUser = userRepository.save(user);
+            logger.info("User updated successfully");
+            return updatedUser;
         } else {
+            logger.error("User with ID {} not found", id);
             throw new RuntimeException("Usuario con id " + id + " no encontrado");
         }
     }
