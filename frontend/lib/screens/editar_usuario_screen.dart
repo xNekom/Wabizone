@@ -11,7 +11,7 @@ class EditarUsuarioScreen extends StatefulWidget {
   const EditarUsuarioScreen({super.key, required this.usuario});
 
   @override
-  _EditarUsuarioScreenState createState() => _EditarUsuarioScreenState();
+  State<EditarUsuarioScreen> createState() => _EditarUsuarioScreenState();
 }
 
 class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
@@ -113,7 +113,12 @@ class _EditarUsuarioScreenState extends State<EditarUsuarioScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Constants.primaryColor.withOpacity(0.3),
+                        color: Constants.primaryColor.withValues(
+                          red: Constants.primaryColor.r.toDouble(),
+                          green: Constants.primaryColor.g.toDouble(),
+                          blue: Constants.primaryColor.b.toDouble(),
+                          alpha: (0.3 * 255).toDouble(),
+                        ),
                         shape: BoxShape.circle,
                       ),
                       child: widget.usuario.imagen.isEmpty

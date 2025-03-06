@@ -68,7 +68,7 @@ class ContactoScreen extends StatelessWidget {
               child: const ContactItem(
                 icon: Icons.phone,
                 title: "Teléfono",
-                content: "+34 123 456 789",
+                subtitle: "+34 123 456 789",
                 actionText: "Llamar ahora",
               ),
             ),
@@ -77,7 +77,7 @@ class ContactoScreen extends StatelessWidget {
               child: const ContactItem(
                 icon: Icons.email,
                 title: "Email",
-                content: "soporte@wabizone.com",
+                subtitle: "soporte@wabizone.com",
                 actionText: "Enviar correo",
               ),
             ),
@@ -86,7 +86,7 @@ class ContactoScreen extends StatelessWidget {
               child: const ContactItem(
                 icon: Icons.web,
                 title: "Sitio Web",
-                content: "www.wabizone.com",
+                subtitle: "www.wabizone.com",
                 actionText: "Visitar web",
               ),
             ),
@@ -95,7 +95,7 @@ class ContactoScreen extends StatelessWidget {
               child: const ContactItem(
                 icon: Icons.location_on,
                 title: "Dirección",
-                content: "Calle Principal 123, Madrid",
+                subtitle: "Calle Principal 123, Madrid",
                 actionText: "Ver en mapa",
               ),
             ),

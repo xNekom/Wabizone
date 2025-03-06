@@ -42,6 +42,7 @@ class _PedidoCardState extends State<PedidoCard> {
       _todosLosProductos = await ProductoService.obtenerTodosProductos();
       productosEnPedido = _parsearDetallesPedido(widget.pedido.detallesPedido);
     } catch (e) {
+      // Se ignora la excepción y se continúa con la lista vacía de productos
     } finally {
       setState(() {
         _cargandoProductos = false;
@@ -66,7 +67,6 @@ class _PedidoCardState extends State<PedidoCard> {
       if (partes.length < 2) continue;
 
       int cantidad = int.tryParse(partes[0].trim()) ?? 0;
-      String precioStr = partes[1].trim();
 
       Producto? productoEncontrado = _todosLosProductos.firstWhere(
         (p) => p.nombre == nombreProducto,

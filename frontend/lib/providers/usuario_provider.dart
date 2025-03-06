@@ -137,6 +137,7 @@ class UsuarioProvider with ChangeNotifier {
       if (result) {
         if (_usuarioActual != null && _usuarioActual!.id == usuario.id) {
           _usuarioActual = usuario;
+          notifyListeners();
         }
 
         await obtenerTodosUsuarios();

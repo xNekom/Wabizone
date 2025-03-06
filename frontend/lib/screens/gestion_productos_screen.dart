@@ -13,7 +13,7 @@ class GestionProductosScreen extends StatefulWidget {
   const GestionProductosScreen({super.key});
 
   @override
-  _GestionProductosScreenState createState() => _GestionProductosScreenState();
+  State<GestionProductosScreen> createState() => _GestionProductosScreenState();
 }
 
 class _GestionProductosScreenState extends State<GestionProductosScreen> {
@@ -81,7 +81,12 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Constants.primaryColor.withOpacity(0.3),
+                            color: Constants.primaryColor.withValues(
+                              red: Constants.primaryColor.r.toDouble(),
+                              green: Constants.primaryColor.g.toDouble(),
+                              blue: Constants.primaryColor.b.toDouble(),
+                              alpha: (0.3 * 255).toDouble(),
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: (imagenPath == null || imagenPath!.isEmpty)
@@ -346,7 +351,12 @@ class _GestionProductosScreenState extends State<GestionProductosScreen> {
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Constants.primaryColor.withOpacity(0.3),
+                            color: Constants.primaryColor.withValues(
+                              red: Constants.primaryColor.r.toDouble(),
+                              green: Constants.primaryColor.g.toDouble(),
+                              blue: Constants.primaryColor.b.toDouble(),
+                              alpha: (0.3 * 255).toDouble(),
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: (imagenPath == null || imagenPath!.isEmpty)

@@ -140,17 +140,6 @@ class _UsuarioFormState extends State<UsuarioForm> {
             ),
             IconButton(
               onPressed: () async {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Ahora puedes usar imágenes más grandes (hasta 16MB). Las imágenes muy grandes se optimizarán automáticamente.',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    backgroundColor: Colors.blue,
-                    duration: Duration(seconds: 4),
-                  ),
-                );
-
                 String? newPath = await ImageUtils.pickImage();
                 if (newPath != null && mounted) {
                   widget.onImagenChanged(newPath);

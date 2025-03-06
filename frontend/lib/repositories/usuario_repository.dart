@@ -1,4 +1,5 @@
 import '../models/usuario.dart';
+import '../services/dio_client.dart';
 
 abstract class IUsuarioRepository {
   Future<String?> validarCredenciales(String usuario, String contrasena);
@@ -12,7 +13,7 @@ abstract class IUsuarioRepository {
 
 class ApiUsuarioRepository implements IUsuarioRepository {
   final String endpoint;
-  final _dioClient;
+  final DioClient _dioClient;
 
   List<Usuario> _usuariosCache = [];
 

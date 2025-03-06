@@ -1,4 +1,5 @@
 import '../models/pedido.dart';
+import '../services/dio_client.dart';
 
 abstract class IPedidoRepository {
   Future<List<Pedido>> obtenerTodos();
@@ -11,7 +12,7 @@ abstract class IPedidoRepository {
 
 class ApiPedidoRepository implements IPedidoRepository {
   final String endpoint;
-  final _dioClient;
+  final DioClient _dioClient;
 
   List<Pedido> _pedidosCache = [];
 

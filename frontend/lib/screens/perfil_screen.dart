@@ -74,11 +74,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       radius: 75,
                       backgroundImage:
                           ImageUtils.getImageProvider(_usuario!.imagen),
-                      backgroundColor: Constants.primaryColor.withOpacity(0.2),
+                      backgroundColor: Constants.primaryColor.withValues(
+                        red: Constants.primaryColor.r.toDouble(),
+                        green: Constants.primaryColor.g.toDouble(),
+                        blue: Constants.primaryColor.b.toDouble(),
+                        alpha: (0.2 * 255).toDouble(),
+                      ),
                     )
                   : CircleAvatar(
                       radius: 75,
-                      backgroundColor: Constants.primaryColor.withOpacity(0.2),
+                      backgroundColor: Constants.primaryColor.withValues(
+                        red: Constants.primaryColor.r.toDouble(),
+                        green: Constants.primaryColor.g.toDouble(),
+                        blue: Constants.primaryColor.b.toDouble(),
+                        alpha: (0.2 * 255).toDouble(),
+                      ),
                       child: Icon(
                         Icons.person,
                         size: 80,

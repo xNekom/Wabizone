@@ -10,6 +10,7 @@ import 'providers/usuario_provider.dart';
 import 'providers/producto_provider.dart';
 import 'providers/pedido_provider.dart';
 import 'providers/carrito_provider.dart';
+import 'providers/auth_provider.dart';
 import 'services/service_locator.dart';
 
 void main() {
@@ -36,6 +37,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<CarritoProvider>(
           create: (_) => CarritoProvider(),
+        ),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => AuthProvider(),
         ),
       ],
       child: MaterialApp(

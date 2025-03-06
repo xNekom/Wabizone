@@ -114,7 +114,8 @@ class PedidoProvider with ChangeNotifier {
       final result = await _pedidoRepository.actualizar(pedido, id);
 
       if (result) {
-        if (_pedidoSeleccionado != null && _pedidoSeleccionado!.nPedido == id) {
+        if (_pedidoSeleccionado != null &&
+            _pedidoSeleccionado!.nPedido == int.parse(id)) {
           _pedidoSeleccionado = pedido;
         }
 
@@ -163,11 +164,12 @@ class PedidoProvider with ChangeNotifier {
       final result = await _pedidoRepository.eliminar(id);
 
       if (result) {
-        if (_pedidoSeleccionado != null && _pedidoSeleccionado!.nPedido == id) {
+        if (_pedidoSeleccionado != null &&
+            _pedidoSeleccionado!.nPedido == int.parse(id)) {
           _pedidoSeleccionado = null;
         }
 
-        _pedidos.removeWhere((pedido) => pedido.nPedido == id);
+        _pedidos.removeWhere((pedido) => pedido.nPedido == int.parse(id));
 
         await obtenerTodosPedidos();
       } else {

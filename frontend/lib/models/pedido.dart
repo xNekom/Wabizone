@@ -78,7 +78,9 @@ class Pedido {
       'detallesPedido': detallesPedido,
       'estadoPedido': estadoPedido,
       'precioTotal': precioTotal,
-      'usuarioId': usuarioId != null ? int.parse(usuarioId!) : null,
+      'usuarioId': usuarioId != null && usuarioId!.isNotEmpty
+          ? int.tryParse(usuarioId!)
+          : null,
       'nombreUsuario': nombreUsuario,
       'nombreCompleto': nombreCompleto,
       'direccion': direccion,

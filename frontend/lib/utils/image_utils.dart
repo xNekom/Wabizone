@@ -1,14 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as path;
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:image_compression/image_compression.dart';
 import 'package:image/image.dart' as img;
 
 class ImageUtils {
@@ -40,7 +36,9 @@ class ImageUtils {
           try {
             final numId = productId.substring(1);
             return 'assets/imagenes/prod$numId.png';
-          } catch (e) {}
+          } catch (e) {
+            // Se ignora la excepción y se continúa con el flujo normal
+          }
         } else if (RegExp(r'^\d+$').hasMatch(productId)) {
           return 'assets/imagenes/prod$productId.png';
         }
@@ -219,7 +217,9 @@ class ImageUtils {
         if (bytes.length > 2 && bytes[0] == 0xFF && bytes[1] == 0xD8) {
           isJpeg = true;
         }
-      } catch (e) {}
+      } catch (e) {
+        // Se ignora la excepción y se asume que no es JPEG
+      }
 
       if (isJpeg) {
         compressedBytes =
@@ -264,6 +264,15 @@ class ImageUtils {
       return const AssetImage(defaultProductImage);
     }
 
+    // Caso especial para Producto 4
+    if (imagePath == 'p4' ||
+        imagePath == '4' ||
+        imagePath.contains('prod4') ||
+        imagePath.contains('Producto 4') ||
+        imagePath.contains('producto 4')) {
+      return const AssetImage('assets/imagenes/prod4.png');
+    }
+
     if (isDataUrl(imagePath)) {
       try {
         final comma = imagePath.indexOf(',');
@@ -273,12 +282,13 @@ class ImageUtils {
             final decodedBytes = base64Decode(data);
             return MemoryImage(decodedBytes);
           } catch (e) {
-            if (imagePath.contains('p4') || imagePath.contains('Producto 4')) {
-              return const AssetImage('assets/imagenes/prod4.png');
-            }
+            // Fallback a imagen por defecto
+            return const AssetImage(defaultProductImage);
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        // Se ignora la excepción y se continúa con el manejo predeterminado de imágenes
+      }
     }
 
     if (isAssetImage(imagePath)) {
@@ -286,28 +296,12 @@ class ImageUtils {
       if (cleanPath.startsWith('assets/assets/')) {
         cleanPath = cleanPath.replaceFirst('assets/', '');
       }
-
-      if (cleanPath.contains('prod4') || cleanPath.contains('Producto 4')) {
-        return const AssetImage('assets/imagenes/prod4.png');
-      }
-
       return AssetImage(cleanPath);
-    }
-
-    if (imagePath == 'p4' ||
-        imagePath == '4' ||
-        imagePath.contains('prod4') ||
-        imagePath.contains('Producto 4') ||
-        imagePath.contains('producto 4')) {
-      return const AssetImage('assets/imagenes/prod4.png');
     }
 
     if (imagePath.startsWith('p') && !imagePath.contains('.')) {
       try {
         final productId = imagePath.substring(1);
-        if (productId == '4') {
-          return const AssetImage('assets/imagenes/prod4.png');
-        }
         final specificPath = 'assets/imagenes/prod$productId.png';
         return AssetImage(specificPath);
       } catch (e) {
@@ -316,9 +310,6 @@ class ImageUtils {
     }
 
     if (RegExp(r'^\d+$').hasMatch(imagePath)) {
-      if (imagePath == '4') {
-        return const AssetImage('assets/imagenes/prod4.png');
-      }
       final specificPath = 'assets/imagenes/prod$imagePath.png';
       return AssetImage(specificPath);
     }

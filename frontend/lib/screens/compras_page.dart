@@ -11,7 +11,7 @@ class ComprasPage extends StatefulWidget {
   const ComprasPage({super.key, required this.usuario});
 
   @override
-  _ComprasPageState createState() => _ComprasPageState();
+  State<ComprasPage> createState() => _ComprasPageState();
 }
 
 class _ComprasPageState extends State<ComprasPage> {

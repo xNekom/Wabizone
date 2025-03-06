@@ -51,6 +51,7 @@ class _PedidoListItemState extends State<PedidoListItem>
             _parsearDetallesPedido(widget.pedido.detallesPedido);
       }
     } catch (e) {
+      // Se ignora la excepción y se continúa con la lista vacía de productos
     } finally {
       if (mounted) {
         setState(() {
@@ -502,142 +503,89 @@ class _PedidoListItemState extends State<PedidoListItem>
 
   Widget _buildProductImage(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) {
-      return Container(
-        width: 50,
-        height: 50,
-        color: Colors.grey.shade300,
-        child:
-            const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
-      );
+      return _buildErrorImage();
     }
 
-    if (imagePath.startsWith('p') &&
-        !imagePath.contains('/') &&
-        !imagePath.contains('.')) {
-      final productId = imagePath.substring(1);
-      final specificImagePath = 'assets/imagenes/prod$productId.png';
+    // Extraer el ID del producto si es posible
+    String productId = "";
+    if (imagePath.startsWith('p') && imagePath.length < 5) {
+      productId = imagePath.substring(1);
+    } else if (imagePath.length == 1 && int.tryParse(imagePath) != null) {
+      productId = imagePath;
+    } else if (imagePath.contains('Producto ')) {
+      final match = RegExp(r'Producto (\d+)').firstMatch(imagePath);
+      if (match != null) {
+        productId = match.group(1) ?? "";
+      }
+    }
 
-      return SizedBox(
-        width: 50,
-        height: 50,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Image.asset(
-            specificImagePath,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 50,
-                height: 50,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.broken_image,
-                    size: 30, color: Colors.grey),
-              );
-            },
-          ),
+    // Si tenemos un ID válido, mostrar la imagen correspondiente
+    if (productId.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          'assets/imagenes/prod$productId.png',
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildErrorImage(),
         ),
       );
     }
 
-    if (imagePath == 'p1' ||
-        imagePath == 'Producto 1' ||
-        imagePath.contains('prod1') ||
-        imagePath.contains('Producto 1')) {
-      return SizedBox(
-        width: 50,
-        height: 50,
-        child: ClipRRect(
+    // Para otros tipos de imágenes
+    if (imagePath.startsWith('data:image')) {
+      try {
+        return ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: Image.asset(
-            'assets/imagenes/prod1.png',
+          child: Image.memory(
+            ImageUtils.extractImageBytes(imagePath),
+            width: 50,
+            height: 50,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 50,
-                height: 50,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.broken_image,
-                    size: 30, color: Colors.grey),
-              );
-            },
+            errorBuilder: (_, __, ___) => _buildErrorImage(),
           ),
+        );
+      } catch (e) {
+        return _buildErrorImage();
+      }
+    }
+
+    if (imagePath.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          imagePath,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildErrorImage(),
         ),
       );
     }
 
-    if (imagePath == 'p4' ||
-        imagePath == 'Producto 4' ||
-        imagePath.contains('prod4') ||
-        imagePath.contains('Producto 4')) {
-      return SizedBox(
-        width: 50,
-        height: 50,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Image.asset(
-            'assets/imagenes/prod4.png',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 50,
-                height: 50,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.broken_image,
-                    size: 30, color: Colors.grey),
-              );
-            },
-          ),
+    if (imagePath.startsWith('http')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.network(
+          imagePath,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildErrorImage(),
         ),
       );
     }
 
-    final String processedImagePath = imagePath.startsWith('assets/')
-        ? imagePath
-        : imagePath.startsWith('http')
-            ? imagePath
-            : 'assets/imagenes/${imagePath.split('/').last}';
+    return _buildErrorImage();
+  }
 
-    return SizedBox(
+  Widget _buildErrorImage() {
+    return Container(
       width: 50,
       height: 50,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: Image(
-          image: ImageUtils.getImageProvider(processedImagePath),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            if (!imagePath.startsWith('assets/imagenes/') &&
-                !imagePath.startsWith('assets/images/') &&
-                !imagePath.startsWith('http')) {
-              try {
-                return Image.asset(
-                  'assets/imagenes/prod${imagePath.replaceAll(RegExp(r'[^0-9]'), '')}.png',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 50,
-                      height: 50,
-                      color: Colors.grey.shade300,
-                      child: const Icon(Icons.broken_image,
-                          size: 30, color: Colors.grey),
-                    );
-                  },
-                );
-              } catch (e) {}
-            }
-
-            return Container(
-              width: 50,
-              height: 50,
-              color: Colors.grey.shade300,
-              child:
-                  const Icon(Icons.broken_image, size: 30, color: Colors.grey),
-            );
-          },
-        ),
-      ),
+      color: Colors.grey.shade300,
+      child: const Icon(Icons.broken_image, size: 30, color: Colors.grey),
     );
   }
 

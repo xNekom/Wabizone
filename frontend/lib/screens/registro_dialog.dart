@@ -12,7 +12,7 @@ class RegistroDialog extends StatefulWidget {
   const RegistroDialog({super.key});
 
   @override
-  _RegistroDialogState createState() => _RegistroDialogState();
+  State<RegistroDialog> createState() => _RegistroDialogState();
 }
 
 class _RegistroDialogState extends State<RegistroDialog> {

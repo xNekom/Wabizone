@@ -1,6 +1,5 @@
 package com.wabizone.ecommerce.api;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,5 +120,32 @@ public class ShoppingCartController {
             cartToTransfer.setSessionId(null);
             return ResponseEntity.ok(shoppingCartRepository.save(cartToTransfer));
         }
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<ShoppingCart> createNewCart(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String sessionId) {
+        
+        if (userId == null && sessionId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        ShoppingCart newCart;
+        if (userId != null) {
+            Optional<ShoppingCart> existingCart = shoppingCartRepository.findByUsuarioId(userId);
+            if (existingCart.isPresent()) {
+                return ResponseEntity.ok(existingCart.get());
+            }
+            newCart = new ShoppingCart(null, userId);
+        } else {
+            Optional<ShoppingCart> existingCart = shoppingCartRepository.findBySessionId(sessionId);
+            if (existingCart.isPresent()) {
+                return ResponseEntity.ok(existingCart.get());
+            }
+            newCart = new ShoppingCart(sessionId, null);
+        }
+        
+        return ResponseEntity.ok(shoppingCartRepository.save(newCart));
     }
 }

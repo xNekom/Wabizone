@@ -1,5 +1,6 @@
 import '../models/producto.dart';
 import '../services/producto_service.dart';
+import '../services/dio_client.dart';
 
 abstract class IProductoRepository {
   Future<List<Producto>> obtenerTodos();
@@ -11,7 +12,7 @@ abstract class IProductoRepository {
 
 class ApiProductoRepository implements IProductoRepository {
   final String endpoint;
-  final _dioClient;
+  final DioClient _dioClient;
 
   List<Producto> _productosCache = [];
 

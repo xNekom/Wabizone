@@ -8,6 +8,8 @@ class Usuario {
   String lugarNacimiento;
   bool bloqueado;
   bool esAdmin;
+  String? email;
+  String? telefono;
 
   Usuario({
     this.id,
@@ -19,6 +21,8 @@ class Usuario {
     required this.lugarNacimiento,
     this.bloqueado = false,
     this.esAdmin = false,
+    this.email,
+    this.telefono,
   });
 
   String? get getId => id;
@@ -30,6 +34,8 @@ class Usuario {
   String get getLugarNacimiento => lugarNacimiento;
   bool get getBloqueado => bloqueado;
   bool get getEsAdmin => esAdmin;
+  String? get getEmail => email;
+  String? get getTelefono => telefono;
 
   set setId(String? newId) => id = newId;
   set setTrato(String trato) => this.trato = trato;
@@ -41,4 +47,6 @@ class Usuario {
       this.lugarNacimiento = lugarNacimiento;
   set setBloqueado(bool bloqueado) => this.bloqueado = bloqueado;
   set setEsAdmin(bool esAdmin) => this.esAdmin = esAdmin;
+  set setEmail(String? email) => this.email = email;
+  set setTelefono(String? telefono) => this.telefono = telefono;
 }

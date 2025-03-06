@@ -14,7 +14,7 @@ class PedidosPage extends StatefulWidget {
   });
 
   @override
-  _PedidosPageState createState() => _PedidosPageState();
+  State<PedidosPage> createState() => _PedidosPageState();
 }
 
 class _PedidosPageState extends State<PedidosPage> {

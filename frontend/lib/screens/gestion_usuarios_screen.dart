@@ -13,23 +13,18 @@ class GestionUsuariosScreen extends StatefulWidget {
   const GestionUsuariosScreen({super.key, required this.adminActual});
 
   @override
-  _GestionUsuariosScreenState createState() => _GestionUsuariosScreenState();
+  State<GestionUsuariosScreen> createState() => _GestionUsuariosScreenState();
 }
 
 class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
-  final _formKey = GlobalKey<FormState>();
-  late Future<List<Usuario>> _usuariosFuture;
-  bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
-    _cargarUsuarios();
   }
 
   Future<void> _cargarUsuarios() async {
     setState(() {
-      _usuariosFuture = UsuarioService.obtenerTodosUsuarios();
+      // Forzar recarga de la pantalla
     });
   }
 
@@ -357,7 +352,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder<List<Usuario>>(
-        future: _usuariosFuture,
+        future: UsuarioService.obtenerTodosUsuarios(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -430,9 +425,6 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                             color: user.bloqueado ? Colors.red : Colors.green,
                           ),
                           onPressed: () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
                             try {
                               Usuario? usuarioActual =
                                   await UsuarioService.buscarUsuarioPorNombre(
@@ -463,10 +455,6 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
                               DialogUtils.showSnackBar(
                                   context, "Error al actualizar usuario: $e",
                                   color: Constants.errorColor);
-                            } finally {
-                              setState(() {
-                                _isLoading = false;
-                              });
                             }
                           },
                         ),

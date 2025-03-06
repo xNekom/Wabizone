@@ -2,7 +2,7 @@ import '../models/usuario.dart';
 import 'dio_client.dart';
 import '../utils/image_utils.dart';
 
-const int MAX_IMAGE_SIZE_BYTES = 16 * 1024 * 1024;
+const int maxImageSizeBytes = 16 * 1024 * 1024;
 
 class UsuarioService {
   static const String endpoint = '/users';
@@ -32,7 +32,7 @@ class UsuarioService {
     } else if (imagen.startsWith('data:image')) {
       int tamanoEstimado = imagen.length;
 
-      if (tamanoEstimado > MAX_IMAGE_SIZE_BYTES) {
+      if (tamanoEstimado > maxImageSizeBytes) {
         imagen = ImageUtils.getDefaultImage(usuario.esAdmin);
       }
     }
@@ -178,7 +178,7 @@ class UsuarioService {
 
       if (jsonData['imagen'].toString().startsWith('data:image')) {
         int imageSize = jsonData['imagen'].toString().length;
-        if (imageSize > MAX_IMAGE_SIZE_BYTES) {
+        if (imageSize > maxImageSizeBytes) {
           jsonData['imagen'] = ImageUtils.getDefaultImage(usuario.esAdmin);
         }
       }
@@ -234,7 +234,7 @@ class UsuarioService {
 
       if (jsonData['imagen'].toString().startsWith('data:image')) {
         int imageSize = jsonData['imagen'].toString().length;
-        if (imageSize > MAX_IMAGE_SIZE_BYTES) {
+        if (imageSize > maxImageSizeBytes) {
           jsonData['imagen'] = ImageUtils.getDefaultImage(usuario.esAdmin);
         }
       }

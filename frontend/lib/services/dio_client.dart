@@ -28,17 +28,59 @@ class DioClient {
   _setupInterceptors() {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
+        Map<String, dynamic> safeParams = {};
+        if (options.queryParameters.isNotEmpty) {
+          safeParams = Map.from(options.queryParameters);
+          if (safeParams.containsKey('contrasena')) {
+            safeParams['contrasena'] = '********';
+          }
+          if (safeParams.containsKey('password')) {
+            safeParams['password'] = '********';
+          }
+        }
+
+        assert(() {
+          print('REQUEST[${options.method}] => PATH: ${options.path}');
+          if (safeParams.isNotEmpty) {
+            print('QUERY PARAMS: $safeParams');
+          }
+
+          if (options.data != null && options.data is Map) {
+            Map<String, dynamic> safeData = Map.from(options.data);
+            if (safeData.containsKey('contrasena')) {
+              safeData['contrasena'] = '********';
+            }
+            if (safeData.containsKey('password')) {
+              safeData['password'] = '********';
+            }
+            print('REQUEST DATA: $safeData');
+          }
+          return true;
+        }());
+
         handler.next(options);
       },
       onResponse: (response, handler) {
+        assert(() {
+          print(
+              'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+          return true;
+        }());
+
         handler.next(response);
       },
       onError: (DioException e, handler) {
+        assert(() {
+          print(
+              'ERROR[${e.response?.statusCode}] => PATH: ${e.requestOptions.path}');
+          print('ERROR MESSAGE: ${e.message}');
+          return true;
+        }());
+
         final statusCode = e.response?.statusCode;
         final path = e.requestOptions.path;
 
         if (statusCode == 403) {
-          final responseData = e.response?.data;
           if (path.contains('/login') || path.contains('/users/login')) {
             final customError = DioException(
               requestOptions: e.requestOptions,

@@ -10,16 +10,31 @@ import '../utils/image_utils.dart';
 import 'checkout_screen.dart';
 import '../utils/format_utils.dart';
 
-class CartPage extends StatelessWidget {
+class CartPage extends StatefulWidget {
   const CartPage({super.key});
+
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar productos en initState en lugar de en build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productoProvider =
+          Provider.of<ProductoProvider>(context, listen: false);
+      if (productoProvider.productos.isEmpty) {
+        productoProvider.obtenerTodosProductos();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final productoProvider =
         Provider.of<ProductoProvider>(context, listen: false);
-    if (productoProvider.productos.isEmpty) {
-      productoProvider.obtenerTodosProductos();
-    }
 
     return Consumer<CarritoProvider>(
       builder: (context, carritoProvider, child) {
@@ -127,7 +142,6 @@ class CartPage extends StatelessWidget {
   Widget _buildCartItem(BuildContext context, CartItem item,
       CarritoProvider carritoProvider, ProductoProvider productoProvider) {
     Producto? productoCompleto;
-    String? imagenUrl;
 
     for (var producto in productoProvider.productos) {
       int? idNum;
@@ -140,7 +154,6 @@ class CartPage extends StatelessWidget {
 
         if (idNum == item.productoId) {
           productoCompleto = producto;
-          imagenUrl = producto.imagen;
           break;
         }
       } catch (e) {
@@ -148,16 +161,14 @@ class CartPage extends StatelessWidget {
       }
     }
 
-    if (productoCompleto == null) {
-      productoCompleto = Producto(
-        id: 'p${item.productoId}',
-        nombre: item.nombre,
-        descripcion: 'Producto en carrito',
-        imagen: 'prod${item.productoId}.png',
-        stock: 0,
-        precio: item.precio,
-      );
-    }
+    productoCompleto ??= Producto(
+      id: 'p${item.productoId}',
+      nombre: item.nombre,
+      descripcion: 'Producto en carrito',
+      imagen: 'prod${item.productoId}.png',
+      stock: 0,
+      precio: item.precio,
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -269,12 +280,16 @@ class CartPage extends StatelessWidget {
   }
 
   ImageProvider _getCartProductImage(Producto producto) {
-    if (producto.id == 'p1' || producto.nombre.contains('Producto 1')) {
-      return const AssetImage('assets/imagenes/prod1.png');
+    // Caso especial para Producto 4
+    if (producto.id == 'p4' ||
+        producto.id == '4' ||
+        producto.nombre.contains('Producto 4') ||
+        producto.imagen.contains('prod4')) {
+      return const AssetImage('assets/imagenes/prod4.png');
     }
 
-    if (producto.id == 'p4' || producto.nombre.contains('Producto 4')) {
-      return const AssetImage('assets/imagenes/prod4.png');
+    if (producto.id == 'p1' || producto.nombre.contains('Producto 1')) {
+      return const AssetImage('assets/imagenes/prod1.png');
     }
 
     if (producto.id.startsWith('p')) {
@@ -293,7 +308,8 @@ class CartPage extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey
+                .withValues(red: 128, green: 128, blue: 128, alpha: 0.3 * 255),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, -2),

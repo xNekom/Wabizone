@@ -126,7 +126,9 @@ class CarritoProvider extends ChangeNotifier {
           } else if (_sessionId != null) {
             _cart = await _carritoService.getCartBySessionId(_sessionId!);
           }
-        } catch (e) {}
+        } catch (e) {
+          _setError('Error al obtener el carrito: ${e.toString()}');
+        }
       }
 
       if (_cart.id != null) {
@@ -152,10 +154,16 @@ class CarritoProvider extends ChangeNotifier {
     try {
       if (_userId != null) {
         _cart = await _carritoService.createNewCart(_userId!, null);
+        print("Carrito creado exitosamente para usuario: $_userId");
       } else if (_sessionId != null) {
         _cart = await _carritoService.createNewCart(null, _sessionId!);
+        print("Carrito creado exitosamente para sesión: $_sessionId");
+      } else {
+        print("No se pudo crear el carrito: userId y sessionId son null");
       }
-    } catch (e) {}
+    } catch (e) {
+      print("Error al crear el carrito: $e");
+    }
   }
 
   Future<void> updateItemQuantity(int productoId, int cantidad) async {
@@ -224,7 +232,37 @@ class CarritoProvider extends ChangeNotifier {
     _setLoading(true);
 
     try {
-      _cart = await _carritoService.transferCartToUser(_sessionId!, userId);
+      print(
+          "Intentando transferir carrito de sesión $_sessionId a usuario $userId");
+
+      try {
+        _cart = await _carritoService.transferCartToUser(_sessionId!, userId);
+        print("Transferencia exitosa del carrito");
+      } catch (transferError) {
+        print("Error en transferencia: $transferError");
+
+        try {
+          print("Intentando obtener carrito existente del usuario $userId");
+          _cart = await _carritoService.getCartByUserId(userId);
+          print("Se encontró carrito existente para el usuario");
+        } catch (getUserCartError) {
+          print("No se encontró carrito para el usuario: $getUserCartError");
+
+          try {
+            print("Creando nuevo carrito para el usuario $userId");
+            _cart = await _carritoService.createNewCart(userId, null);
+            print("Carrito creado exitosamente");
+          } catch (createCartError) {
+            print("Error al crear carrito: $createCartError");
+            _cart = ShoppingCart(
+              usuarioId: userId,
+              items: [],
+              ultimaActualizacion: DateTime.now(),
+              total: 0.0,
+            );
+          }
+        }
+      }
 
       _userId = userId;
 
@@ -233,6 +271,7 @@ class CarritoProvider extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
+      print("Error general en transferCartToUser: $e");
       _setError('Error al transferir el carrito: $e');
     } finally {
       _setLoading(false);

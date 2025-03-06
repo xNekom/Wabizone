@@ -10,7 +10,7 @@ class GestionPedidosScreen extends StatefulWidget {
   const GestionPedidosScreen({super.key});
 
   @override
-  _GestionPedidosScreenState createState() => _GestionPedidosScreenState();
+  State<GestionPedidosScreen> createState() => _GestionPedidosScreenState();
 }
 
 class _GestionPedidosScreenState extends State<GestionPedidosScreen> {
