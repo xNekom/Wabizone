@@ -180,4 +180,6 @@ La Licencia MIT es una licencia de software permisiva que permite:
 - Sublicenciamiento permitido
 - Sin garantías ni responsabilidades
 
-Wabizone © 2024 - Contacto para uso comercial: [propietario@wabizone.com](mailto:propietario@wabizone.com)
+Wabizone © 2024 - Contacto para uso comercial: [pedrojuuu@gmail.com](pedrojuuu@gmail.com)
+=======
+Todos los derechos reservados © 2024 Wabizone
