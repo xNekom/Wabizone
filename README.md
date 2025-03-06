@@ -169,10 +169,15 @@ static const String baseUrl = 'http://localhost:8081/api/v1';
 - Ocultación de contraseñas en logs
 - Validación de datos en backend y frontend
 
-## Desarrolladores
-
-- Equipo Wabizone
-
 ## Licencia
 
-Todos los derechos reservados © 2024 Wabizone
+Este proyecto está licenciado bajo la Licencia MIT - vea el archivo [LICENSE](LICENSE) para más detalles.
+
+La Licencia MIT es una licencia de software permisiva que permite:
+
+- Uso comercial y privado libre
+- Modificación y distribución sin restricciones
+- Sublicenciamiento permitido
+- Sin garantías ni responsabilidades
+
+Wabizone © 2024 - Contacto para uso comercial: [propietario@wabizone.com](mailto:propietario@wabizone.com)
