@@ -169,10 +169,6 @@ static const String baseUrl = 'http://localhost:8081/api/v1';
 - Ocultación de contraseñas en logs
 - Validación de datos en backend y frontend
 
-## Desarrolladores
-
-- Equipo Wabizone
-
 ## Licencia
 
 Todos los derechos reservados © 2024 Wabizone
